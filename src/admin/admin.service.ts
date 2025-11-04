@@ -16,6 +16,7 @@ export class AdminService {
   deleteAdmin(id: number , name:string): object {
     return { message: `Admin with id ${id}, name ${name} has been deleted.` };
   }
+  /*kkjj*/
 
   updateAdmin(id: number, mydata:AdminDTO): object {
     return { message: `Admin updated. Id ${id}` };
