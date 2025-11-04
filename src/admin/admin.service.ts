@@ -5,10 +5,10 @@ import { AdminDTO } from './admin.dto';
 export class AdminService {
     
   getAdminById(id: number): object { 
-    return { id: id, name: 'Admin Name', role: 'Administrator' };
+    return { id: id, name: 'Admin Name', password: 'password' };
   }
 
-  createAdmin(mydata:object): object {
+  createAdmin(mydata:AdminDTO): object {
     console.log(mydata);
     return mydata;
   }
@@ -37,6 +37,6 @@ export class AdminService {
   }
 
   getByName(name:string): object{
-    return { name: name };
+    return { id:1 ,name: name };
   }
 }

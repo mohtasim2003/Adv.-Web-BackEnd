@@ -43,7 +43,7 @@ export class AdminController {
     return this.adminService.getByIdAndName(id, name);
   }
 
-  @Get('getbyname:name')
+  @Get('getbyname/:name')
   getByName(@Param('name') name:string): object{
     return this.adminService.getByName(name);
   }
