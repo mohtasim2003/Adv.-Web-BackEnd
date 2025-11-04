@@ -18,7 +18,7 @@ export class AdminController {
     return this.adminService.createAdmin(mydata);
   }
 
-  @Delete('deleteadmin/')
+  @Delete('deleteadmin')
   deleteAdmin(@Query('id') id:number, @Query('name') name:string): object {
     return this.adminService.deleteAdmin(id , name);
   }
