@@ -18,7 +18,7 @@ export class AdminService {
   }
 
   updateAdmin(id: number, mydata:AdminDTO): object {
-    return { id: id, name: mydata.name, password: mydata.password };
+    return { message: `Admin updated. Id ${id}` };
   } 
 
   updateAdminPassword(id: number, password:string): object {
