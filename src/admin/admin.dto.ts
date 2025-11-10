@@ -1,14 +1,20 @@
-//import all from 'class-validator';
-/*
-Name Must not contain any special character
-• Password field must be at least 6 character long and it must contain one
-Lowercase character
-• Validate the file uploaded is in PDF format
-• Phone Number field must start with 01*/
+import { IsNotEmpty, IsNumberString, Matches, MinLength } from 'class-validator';
 
 
 export class AdminDTO {
+
     id: number;
+
+    @Matches(/^[a-zA-Z0-9 ]+$/, { message: 'Name must not contain any special character' })
     name: string;
+
+    @MinLength(6, { message: 'Password must be at least 6 characters long' })
+    @Matches(/(?=.*[a-z])/, { message: 'Password must contain at least one lowercase character' })
     password: string;
+
+    @IsNumberString()
+    @Matches(/^01/, { message: 'Phone Number must start with 01' })
+    phone: string;
+
+    filename: string;
 }

@@ -3,6 +3,10 @@ import { AdminDTO } from './admin.dto';
 
 @Injectable()
 export class AdminService {
+
+  uploadFile(id: number, filename: string): object {
+    return { message: `File ${filename} uploaded for Admin with id ${id}` };
+  }
     
   getAdminById(id: number): object { 
     return { id: id, name: 'Admin Name', password: 'password' };
