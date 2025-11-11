@@ -25,8 +25,8 @@ export class AdminService {
     return { message: `Admin updated. Id ${id}` };
   } 
 
-  updateAdminPassword(id: number, password:string): object {
-    return { id: id, message: `Password updated to ${password}` };
+  updateAdminName(id: number, name:string): object {
+    return { id: id, message: `Name updated to ${name}` };
   }
 
   getAllAdmin(): object {

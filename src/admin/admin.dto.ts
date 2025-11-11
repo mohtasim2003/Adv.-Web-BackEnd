@@ -5,9 +5,11 @@ export class AdminDTO {
 
     id: number;
 
-    @Matches(/^[a-zA-Z0-9 ]+$/, { message: 'Name must not contain any special character' })
+    @IsNotEmpty()
+    @Matches(/^[a-zA-Z0-9]+$/, { message: 'Name must not contain any special character' })
     name: string;
 
+    @IsNotEmpty()
     @MinLength(6, { message: 'Password must be at least 6 characters long' })
     @Matches(/(?=.*[a-z])/, { message: 'Password must contain at least one lowercase character' })
     password: string;
