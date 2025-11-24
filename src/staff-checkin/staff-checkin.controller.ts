@@ -54,12 +54,6 @@ export class StaffCheckinController {
 
   // ---------- ORM ROUTES ----------
 
-  // CREATE USER
-  /*@Post('create')
-  createORM(@Body() createCheckinDto: CreateCheckinDto) {
-  return this.staffCheckinService.staffCheckin(createCheckinDto);
-}*/
-
 @Post('create')
 async createORM(@Body() data: Partial<StaffCheckinEntity>) {
   return this.staffCheckinService.createUser(data);

@@ -3,6 +3,10 @@ import { AdminDTO } from './admin.dto';
 
 @Injectable()
 export class AdminService {
+
+  uploadFile(id: number, filename: string): object {
+    return { message: `File ${filename} uploaded for Admin with id ${id}` };
+  }
     
   getAdminById(id: number): object { 
     return { id: id, name: 'Admin Name', password: 'password' };
@@ -16,14 +20,13 @@ export class AdminService {
   deleteAdmin(id: number , name:string): object {
     return { message: `Admin with id ${id}, name ${name} has been deleted.` };
   }
-  /*kkjj*/
 
   updateAdmin(id: number, mydata:AdminDTO): object {
     return { message: `Admin updated. Id ${id}` };
   } 
 
-  updateAdminPassword(id: number, password:string): object {
-    return { id: id, message: `Password updated to ${password}` };
+  updateAdminName(id: number, name:string): object {
+    return { id: id, message: `Name updated to ${name}` };
   }
 
   getAllAdmin(): object {
