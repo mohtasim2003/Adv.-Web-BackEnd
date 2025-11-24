@@ -6,11 +6,11 @@ import { DbModule } from './db/db.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'airline-management-airline-management.l.aivencloud.com',
-      port: 21496,
-      username: 'avnadmin',
-      password: 'AVNS_VAT7Jz1TUw_Ox5gDetD',
-      database: 'defaultdb',
+      host: 'airlinemanagement-airlinemanagement.l.aivencloud.com',
+      port: 990,
+      username: '',
+      password: '',
+      database: '',
       autoLoadEntities: true,
       synchronize: true, 
       ssl: {
