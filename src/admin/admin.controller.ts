@@ -1,79 +1,36 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AdminService } from './admin.service';
-import { AdminDTO } from './admin.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { MulterError,diskStorage } from 'multer';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query, Res, Session, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
+import { AdminService } from "./admin.service";
+import { AdminLogin } from "./dto/admin.entity";
+import { AdminDto } from "./dto/admin.dto";
+import { CreateAircraftDto } from "./dto/aircraft.dto";
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+    constructor(private readonly adminService: AdminService) {}
 
-  @Get('getbyid/:id')
-  getById(@Param('id') id:number): object{
-    return this.adminService.getAdminById(id);
-  }
-
-  @Post('createadmin')
-  @UsePipes(new ValidationPipe())
-  createAdmin(@Body() mydata:AdminDTO) : object
-  {
-    console.log(mydata.name);
-    return this.adminService.createAdmin(mydata);
-  }
-
-  @Post('fileupload/:id')
-  @UseInterceptors(FileInterceptor('myfile',
-    {
-      fileFilter: (req, file, cb) => {
-        if (file.originalname.match(/\.pdf$/)) {
-          cb(null, true);
-        }
-        else {
-          cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'myfile'), false);
-        }
-      },
-      storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, cb) => {
-        let id = req.params.id;
-        cb(null,id+"-"+ Date.now() + '-' + file.originalname);
-      },
-    })
-    }))
-    uploadFile(@Param('id') id:number , @UploadedFile() file: Express.Multer.File): object {
-      let filename = file.filename;
-      return this.adminService.uploadFile(id, filename);
+    @Post('login')
+    @UsePipes(new ValidationPipe())
+    async login(@Body() body: AdminDto): Promise<object> {
+        console.log(body);
+        return this.adminService.login(body.mail, body.password);
     }
 
-  @Delete('deleteadmin')
-  deleteAdmin(@Query('id') id:number, @Query('name') name:string): object {
-    return this.adminService.deleteAdmin(id , name);
-  }
+    /*@Post('createadmin')
+    async createAdmin(@Body() adminData: AdminLogin): Promise<AdminLogin> {
+        return this.adminService.createAdmin(adminData);
+    }*/
+    
+    
+    @Post('aircraft')
+    @UsePipes(new ValidationPipe())
+    async createAircraft(@Body() aircraftData: CreateAircraftDto): Promise<object> {
+        return this.adminService.createAircraft(aircraftData);
+    }
+    
 
-  @Put('updateadmin/:id')
-  @UsePipes(new ValidationPipe())
-  updateAdmin(@Param('id') id:number, @Body() mydata:AdminDTO): object {
-    return this.adminService.updateAdmin(id, mydata);
-  }
-
-  @Patch('updatename/:id')
-  updatePassword(@Param('id') id:number, @Body('name') name:string): object {
-    return this.adminService.updateAdminName(id, name); ;
-  }
-
-  @Get('getalladmin')
-  getAllAdmin(): object {
-    return this.adminService.getAllAdmin();
-  }
-
-  @Get('getbyidandname')
-  getByIdAndName(@Query('id') id:number, @Query('name') name:string): object{
-    return this.adminService.getByIdAndName(id, name);
-  }
-
-  @Get('getbyname/:name')
-  getByName(@Param('name') name:string): object{
-    return this.adminService.getByName(name);
-  }
-
+    
+    
+    
 }
+
+

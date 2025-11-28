@@ -1,46 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { AdminDTO } from './admin.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Like, Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { AdminLogin } from './dto/admin.entity';
+import { CreateAircraftDto } from './dto/aircraft.dto';
 
 @Injectable()
 export class AdminService {
+  constructor(
+    @InjectRepository(AdminLogin)
+    private AdminLoginRepository: Repository<AdminLogin>,
+    @InjectRepository(CreateAircraftDto)
+    private AircraftRepository: Repository<CreateAircraftDto>,
+    private jwtService: JwtService,
+  ) {}
 
-  uploadFile(id: number, filename: string): object {
-    return { message: `File ${filename} uploaded for Admin with id ${id}` };
-  }
+  async login( email: string, password: string): Promise<object> {
     
-  getAdminById(id: number): object { 
-    return { id: id, name: 'Admin Name', password: 'password' };
+    const admin = await this.AdminLoginRepository.findOne({ where: { mail: email } });
+    if (!admin) {
+      return { message: 'Admin not found' };
+    }
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (isPasswordValid) {
+      const payload = { mail: admin.mail, role: 'admin' };
+      const token = this.jwtService.sign(payload);
+      return { accessToken: token };
+    } else {
+      return { message: 'Invalid password' };
+    }
   }
 
-  createAdmin(mydata:AdminDTO): object {
-    console.log(mydata);
-    return mydata;
+  
+  async createAdmin(adminData: AdminLogin): Promise<AdminLogin> {
+    const salt = await bcrypt.genSalt();
+    const admin = new AdminLogin();
+    admin.mail =adminData.mail;
+    admin.password = await bcrypt.hash(adminData.password, salt);
+    return this.AdminLoginRepository.save(admin);
   }
 
-  deleteAdmin(id: number , name:string): object {
-    return { message: `Admin with id ${id}, name ${name} has been deleted.` };
+  async createAircraft(aircraftData: CreateAircraftDto): Promise<object> {
+    return this.AircraftRepository.save(aircraftData);
   }
 
-  updateAdmin(id: number, mydata:AdminDTO): object {
-    return { message: `Admin updated. Id ${id}` };
-  } 
-
-  updateAdminName(id: number, name:string): object {
-    return { id: id, message: `Name updated to ${name}` };
-  }
-
-  getAllAdmin(): object {
-    return [
-      { id: 1, name: 'Admin One' },
-      { id: 2, name: 'Admin Two' },
-    ];
-  }
-
-  getByIdAndName(id: number, name:string): object {
-    return { id: id, name: name };
-  }
-
-  getByName(name:string): object{
-    return { id:1 ,name: name };
-  }
 }
