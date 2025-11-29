@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 import { AdminModule } from './admin/admin.module';
 import { EmployeeModule } from './employee/employee.module';
+import { CustomerModule } from './customer/customer.module';
 dotenv.config();
 
 
@@ -34,7 +35,8 @@ dotenv.config();
 
     
     AdminModule,
-    EmployeeModule
+    EmployeeModule,
+    CustomerModule
   ],
   controllers: [],
   providers: [],
