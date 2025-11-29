@@ -48,6 +48,7 @@ export class AdminService {
     const admin = new User();
     admin.email = adminData.mail;
     admin.password = await bcrypt.hash(adminData.password, salt);
+    admin.role = UserRole.ADMIN;
     return this.AdminLoginRepository.save(admin);
   }
 
@@ -143,7 +144,7 @@ export class AdminService {
   }
 
   async deleteEmployee(id: string): Promise<object> {
-    const employee = await this.AdminLoginRepository.findOne({ where: { id: id, role: UserRole.EMPLOYEE } });
+    const employee = await this.AdminLoginRepository.findOne({ where: { id: id, role: UserRole.CUSTOMER } });
     if (!employee) {
       return { message: 'Employee not found' };
     }
