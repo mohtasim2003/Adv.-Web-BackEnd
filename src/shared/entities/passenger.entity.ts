@@ -10,7 +10,7 @@ export class Passenger {
     name: string;
 
     @Column()
-    passportNumber: string;
+    passport: string;
 
     @ManyToOne(() => Booking, booking => booking.passengers)
     booking: Booking;

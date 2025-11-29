@@ -9,22 +9,20 @@ export class Booking {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @ManyToOne(() => Flight, flight => flight.bookings, {eager: true})
-    flight: Flight;
+  @ManyToOne(() => Flight, flight => flight.bookings) 
+  flight: Flight; 
 
-    @ManyToOne(() => User, user => user.bookings, {eager: true})
-    customer: User;
+  @ManyToOne(() => User)  
+  customer: User; 
 
-    @CreateDateColumn()
-    bookingDate: Date;
+  @Column() 
+  bookingDate: Date; 
+  @Column({ default: 'pending' }) 
+  status: string; 
+  
+  @OneToOne(() => Payment, payment => payment.booking, { cascade: true })
+  payment: Payment;
 
-    @Column({default: 'Pending'})
-    status: string;
-
-    @OneToOne(() => Payment, payment => payment.booking, {cascade: true, eager: true})
-    @JoinColumn()
-    payment: Payment;
-
-    @OneToMany(() => Passenger, passenger => passenger.booking, {cascade: true, eager: true})
-    passengers: Passenger[];
+  @OneToMany(() => Passenger, passenger => passenger.booking, { cascade: true })
+  passengers: Passenger[]; 
 }
