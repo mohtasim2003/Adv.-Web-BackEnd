@@ -21,6 +21,8 @@ export class EmployeeService {
     @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
+
+  //old
   async createBooking(dto: CreateBookingDto) {
     const flight = await this.flightRepo.findOne({ where: { id: dto.flightId }});
     if (!flight) throw new NotFoundException('Flight not found');

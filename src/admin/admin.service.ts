@@ -1,3 +1,6 @@
+
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +13,7 @@ import { User, UserRole } from 'src/shared/entities/user.entity';
 import { CreateFlightDto } from './dto/flight.dto';
 import { Flight } from 'src/shared/entities/flight.entity';
 import { EmployeeDto } from './dto/employee.dto';
+import { MailerService } from '@nestjs-modules/mailer/dist';
   
 @Injectable()
 export class AdminService {
@@ -21,6 +25,7 @@ export class AdminService {
     @InjectRepository(Flight)
     private FlightRepository: Repository<Flight>,
     private jwtService: JwtService,
+    private mailerService: MailerService,
   ) {}
 
   async login( email: string, password: string): Promise<object> {
@@ -37,6 +42,11 @@ export class AdminService {
       }
       const payload = { email: admin.email, role: 'admin' };
       const token = this.jwtService.sign(payload);
+      await this.mailerService.sendMail({
+        to: process.env.ADMIN_MAIL,
+        subject: "Admin Login Notification",
+        text: `You have successfully logged in as an admin. Access Time: ${new Date().toISOString()}`,
+      });
       return { accessToken: token };
     } else {
       return { message: 'Invalid password' };

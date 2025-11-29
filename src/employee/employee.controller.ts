@@ -7,12 +7,15 @@ import { CreateBookingDto } from "../employee/dto/create-booking.dto";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { CreatePassengerDto } from "./dto/create-passenger.dto";
 import { UpdateBookingDto } from "./dto/update-booking.dto";
+import { EmployeeGuard } from "./auth/employee.guard";
 
 @Controller('employee')
+@UseGuards(EmployeeGuard)
 @UseGuards(AuthGuard('jwt'), RoleGuard)
 @Roles('employee')
 export class EmployeeController {
     constructor(private readonly employeeService: EmployeeService) {}
+
 
     @Post ('bookings')
     createBooking(@Body(new ValidationPipe({whitelist: true})) dto: CreateBookingDto) {
