@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DbModule } from './db/db.module';
 import * as dotenv from 'dotenv';
 import { AdminModule } from './admin/admin.module';
 dotenv.config();
@@ -32,7 +31,6 @@ dotenv.config();
   
 
 
-    DbModule,
     AdminModule
   ],
   controllers: [],
