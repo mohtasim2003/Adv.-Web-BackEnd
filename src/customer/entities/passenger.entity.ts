@@ -1,5 +1,6 @@
+import { Booking } from 'src/shared/entities/booking.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Booking } from '../../shared/entities/booking.entity';
+
 
 @Entity()
 export class Passenger {

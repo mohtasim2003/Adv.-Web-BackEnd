@@ -1,0 +1,67 @@
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Booking } from '../shared/entities/booking.entity';
+import { Flight } from '../shared/entities/flight.entity';
+import { Passenger } from './entities/passenger.entity';
+import { Payment } from '../shared/entities/payment.entity';
+import { User } from '../shared/entities/user.entity';
+import { CreateBookingDto } from './dto/create-booking.dto';
+
+@Injectable()
+export class CustomerService {
+  constructor(
+    @InjectRepository(Booking) private bookingRepo: Repository<Booking>,
+    @InjectRepository(Flight) private flightRepo: Repository<Flight>,
+    @InjectRepository(Passenger) private passengerRepo: Repository<Passenger>,
+    @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
+    @InjectRepository(User) private userRepo: Repository<User>,
+  ) {}
+
+  async createBooking(userId: string, dto: CreateBookingDto) {
+    const flight = await this.flightRepo.findOne({ where: { id: dto.flightId } });
+    if (!flight) throw new NotFoundException('Flight not found');
+
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Create booking
+    const booking = this.bookingRepo.create({
+      flight,
+      customer: user,
+      status: 'confirmed',
+      passengers: dto.passengers.map(p => this.passengerRepo.create(p)),
+      bookingDate: new Date(),
+    });
+
+    // Optionally create payment record if paymentMethod provided
+    if (dto.paymentMethod) {
+      const payment = this.paymentRepo.create({
+        amount: 100, // compute actual fare
+        method: dto.paymentMethod,
+      });
+      booking.payment = payment;
+    }
+
+    return this.bookingRepo.save(booking);
+  }
+
+  async getMyBookings(userId: string) {
+    return this.bookingRepo.find({
+      where: { customer: { id: userId } },
+      relations: ['flight', 'passengers', 'payment'],
+    });
+  }
+
+  async getBooking(userId: string, bookingId: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['flight', 'passengers', 'payment', 'customer'],
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.customer.id !== userId) throw new ForbiddenException('Not allowed');
+    return booking;
+  }
+
+  // Additional update/cancel methods...
+}

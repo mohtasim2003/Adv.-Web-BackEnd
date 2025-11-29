@@ -13,7 +13,8 @@ import { User } from './user.entity';
 // import { Payment } from './payment.entity';
 // import { Passenger } from '../../customer/entities/passenger.entity';
 import { Payment } from './payment.entity';
-import { Passenger } from './passenger.entity';
+import { Passenger } from 'src/customer/entities/passenger.entity';
+// import { Passenger } from './passenger.entity';
 
 @Entity()
 export class Booking {
