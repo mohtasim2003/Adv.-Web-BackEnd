@@ -8,13 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Booking } from '../shared/entities/booking.entity';
 import { Flight } from '../shared/entities/flight.entity';
-import { Passenger } from './entities/passenger.entity';
+// import { Passenger } from './entities/passenger.entity';
 import { Payment } from '../shared/entities/payment.entity';
 import { User } from '../shared/entities/user.entity';
 import { Profile } from './entities/profile.entity';
 
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Passenger } from 'src/shared/entities/passenger.entity';
 
 @Injectable()
 export class CustomerService {
