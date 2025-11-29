@@ -8,14 +8,33 @@ import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { CreatePassengerDto } from "./dto/create-passenger.dto";
 import { UpdateBookingDto } from "./dto/update-booking.dto";
 import { EmployeeGuard } from "./auth/employee.guard";
+import { CreateEmployeeDto } from "./dto/create-employee.dto";
+import { LoginEmployeeDto } from "./dto/login-employee.dto";
 
 @Controller('employee')
-@UseGuards(EmployeeGuard)
-@UseGuards(AuthGuard('jwt'), RoleGuard)
-@Roles('employee')
 export class EmployeeController {
     constructor(private readonly employeeService: EmployeeService) {}
 
+  @Post('register')
+  registerEmployee(
+    @Body(new ValidationPipe({ whitelist: true }))
+    dto: CreateEmployeeDto
+  ) {
+    return this.employeeService.registerEmployee(dto);
+  }
+
+  @Post('login')
+  loginEmployee(
+    @Body(new ValidationPipe({ whitelist: true }))
+    dto: LoginEmployeeDto
+  ) {
+    return this.employeeService.loginEmployee(dto);
+  }
+
+  //only employee can access the below routes
+@UseGuards(EmployeeGuard)
+@UseGuards(AuthGuard('jwt'), RoleGuard)
+@Roles('employee')
 
     @Post ('bookings')
     createBooking(@Body(new ValidationPipe({whitelist: true})) dto: CreateBookingDto) {
