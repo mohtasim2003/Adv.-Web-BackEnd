@@ -1,10 +1,10 @@
 import { Controller, Post, Body, UseGuards, Req, Get, Param, ParseUUIDPipe, Put, Patch } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
 import { CustomerService } from './customer.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RolesGuard } from './auth/roles.guard';
+import { Roles } from './auth/roles.decorator';
 
 @Controller('customer')
 @UseGuards(JwtAuthGuard, RolesGuard)
