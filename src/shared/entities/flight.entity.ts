@@ -28,4 +28,5 @@ export class Flight {
   @ManyToMany(() => User)
   @JoinTable()
   crew: User[];
+    bookings: any;
 }
