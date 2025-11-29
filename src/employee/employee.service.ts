@@ -7,8 +7,13 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Passenger } from '../shared/entities/passenger.entity';
 import { Payment } from './entities/payment.entity';
 import { Flight } from '../shared/entities/flight.entity';
-import { User } from '../shared/entities/user.entity';
+import { User, UserRole } from '../shared/entities/user.entity';
 import { CreatePassengerDto } from './dto/create-passenger.dto';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UnauthorizedException } from '@nestjs/common/exceptions';
+import { LoginEmployeeDto } from './dto/login-employee.dto';
 
 @Injectable()
 export class EmployeeService {
@@ -21,8 +26,65 @@ export class EmployeeService {
     @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
+//registration and Login
+  async registerEmployee(dto: CreateEmployeeDto) {
+    const existing = await this.userRepo.findOne({
+      where: { email: dto.email }
+    });
 
-  //old
+    if (existing) {
+      throw new BadRequestException("Email already registered");
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const employee = this.userRepo.create({
+      name: dto.name,
+      email: dto.email,
+      password: hashedPassword,
+      role: UserRole.EMPLOYEE
+    });
+
+    await this.userRepo.save(employee);
+
+    return {
+      message: "Employee registered successfully",
+      employeeId: employee.id
+    };
+  }
+
+  async loginEmployee(dto: LoginEmployeeDto) {
+    const user = await this.userRepo.findOne({
+      where: { email: dto.email }
+    });
+
+    if (!user || user.role !== 'employee') {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    const match = await bcrypt.compare(dto.password, user.password);
+    if (!match) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET || "secret123",
+      { expiresIn: "7d" }
+    );
+
+    return {
+      message: "Login successful",
+      token
+    };
+  }
+
+// Booking Management
   async createBooking(dto: CreateBookingDto) {
     const flight = await this.flightRepo.findOne({ where: { id: dto.flightId }});
     if (!flight) throw new NotFoundException('Flight not found');
