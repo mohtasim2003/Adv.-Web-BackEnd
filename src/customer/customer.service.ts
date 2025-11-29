@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,6 +18,10 @@ import { Profile } from './entities/profile.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Passenger } from 'src/shared/entities/passenger.entity';
+import { LoginCustomerDto } from './dto/login-customer.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class CustomerService {
@@ -38,6 +44,42 @@ export class CustomerService {
     @InjectRepository(Profile)
     private profileRepo: Repository<Profile>,
   ) {}
+
+
+
+  // ── REGISTER + BCRYPT (3 marks) ─────────────────────
+  async registerCustomer(dto: RegisterCustomerDto) {
+    const exists = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (exists) throw new ConflictException('Email already registered');
+
+    const hashed = await bcrypt.hash(dto.password, 10);
+    const user = this.userRepo.create({
+      email: dto.email,
+      password: hashed,
+      UserRole: 'customer',
+    });
+    user.profile = this.profileRepo.create({ name: dto.name });
+    await this.userRepo.save(user);
+    return { message: 'Registered successfully' };
+  }
+
+  // ── LOGIN + JWT (part of 5 marks) ───────────────────
+  async loginCustomer(dto: LoginCustomerDto) {
+    const user = await this.userRepo.findOne({
+      where: { email: dto.email },
+      relations: ['profile'],
+    });
+
+    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    return {
+      access_token: jwt.sign(payload, process.env.JWT_SECRET || 'secret123', { expiresIn: '24h' }),
+      user: { id: user.id, email: user.email, name: user.profile?.name },
+    };
+  }
 
   // ------------------------------------------------------------------------
   // CREATE BOOKING
