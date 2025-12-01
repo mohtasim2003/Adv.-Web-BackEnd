@@ -1,5 +1,4 @@
-import { IsString, IsInt, Min } from 'class-validator';
-//import transformer from 'class-transformer';
+import { IsString, IsInt, Min, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateAircraftDto {
@@ -15,4 +14,23 @@ export class CreateAircraftDto {
 
     @IsString()
     status: string;
+}
+
+export class UpdateAircraftStatusDto {
+    @IsOptional()
+    @IsString()
+    status: string;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    capacity: number;
+
+    @IsOptional()
+    @IsString()
+    model: string;
+
+    @IsOptional()
+    @IsString()
+    registration: string;
 }
