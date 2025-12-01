@@ -7,7 +7,6 @@ export class Payment {
   id: string;
 
   @OneToOne(() => Booking, booking => booking.payment)
-  @JoinColumn() // Payment owns FK to Booking
   booking: Booking;
 
   @Column('decimal')
