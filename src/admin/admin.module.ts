@@ -4,12 +4,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { AdminLogin } from './dto/admin.entity';
-import { AdminController } from './admin.controller';
+
 import { AdminService } from './admin.service';
 import { User } from 'src/shared/entities/user.entity';
 import { Aircraft } from 'src/shared/entities/aircraft.entity';
 import { Flight } from 'src/shared/entities/flight.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { AdminController } from './admin.controller';
 
 
 @Module({

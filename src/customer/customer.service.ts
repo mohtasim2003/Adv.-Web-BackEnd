@@ -35,7 +35,7 @@ export class CustomerService {
     private jwtService: JwtService,   // ← MUST INJECT
   ) {}
 
-  // REGISTER + BCRYPT
+// REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
   async registerCustomer(dto: RegisterCustomerDto) {
     const exists = await this.userRepo.findOne({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email already registered');
@@ -45,30 +45,36 @@ export class CustomerService {
     const user = this.userRepo.create({
       email: dto.email,
       password: hashed,
-      UserRole: 'customer',   // ← string, not UserRole enum
+      userRole: 'customer', // string – correct
     });
-
-    user.profile = this.profileRepo.create({ name: dto.name });
     await this.userRepo.save(user);
 
-    return { message: 'Registered successfully' };
+    // Create profile separately – Profile owns the FK (100% correct pattern)
+    await this.profileRepo.save(
+      this.profileRepo.create({
+        user: { id: user.id } as User,
+        name: dto.name,
+      }),
+    );
+
+    return { message: 'Registered successfully', email: user.email, password: user.password };
   }
 
-  // LOGIN + JWT (using official JwtService)
+  // LOGIN + JWT – Load profile from Profile table only
   async loginCustomer(dto: LoginCustomerDto) {
-    const user = await this.userRepo.findOne({
-      where: { email: dto.email },
-      relations: ['profile'],
-    });
-
+    const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const profile = await this.profileRepo.findOne({
+      where: { user: { id: user.id } },
+    });
+
     const payload = {
       sub: user.id,
       email: user.email,
-      role: 'customer',   // ← force string 'customer'
+      role: 'customer',
     };
 
     return {
@@ -76,7 +82,7 @@ export class CustomerService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.profile?.name || '',
+        name: profile?.name || '',
       },
     };
   }
