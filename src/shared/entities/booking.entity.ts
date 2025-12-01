@@ -21,6 +21,7 @@ export class Booking {
   status: string; 
   
   @OneToOne(() => Payment, payment => payment.booking, { cascade: true })
+  @JoinColumn()
   payment: Payment;
 
   @OneToMany(() => Passenger, passenger => passenger.booking, { cascade: true })

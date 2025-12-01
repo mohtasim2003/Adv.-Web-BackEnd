@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomerController } from './customer.controller';
@@ -10,6 +12,8 @@ import { Profile } from './entities/profile.entity';
 import { Passenger } from '../shared/entities/passenger.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { CustomerGuard } from './auth/customer.guard';
+import { Aircraft } from 'src/shared/entities/aircraft.entity';
+import { MailerModule } from '@nestjs-modules/mailer';
 // import { Booking } from '../shared/entities/booking.entity';
 // import { Flight } from '../shared/entities/flight.entity';
 // import { Passenger } from './entities/passenger.entity';
@@ -21,7 +25,22 @@ import { CustomerGuard } from './auth/customer.guard';
   imports: [TypeOrmModule.forFeature([Booking, Flight, Passenger, Payment, User, Profile]), JwtModule.register({
     secret: 'secret123',
     signOptions: {expiresIn: '24h'},
-  })],
+  }),
+
+   TypeOrmModule.forFeature([Aircraft, User,Flight]),
+      MailerModule.forRoot({
+        transport: {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: {
+            user: process.env.ADMIN_MAIL,
+            pass: process.env.ADMIN_MAIL_PASSWORD,
+          },
+  }}),
+
+],
   controllers: [CustomerController],
   providers: [CustomerService,CustomerGuard],
 })

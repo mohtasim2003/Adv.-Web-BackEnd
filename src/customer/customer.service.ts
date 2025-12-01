@@ -1,4 +1,6 @@
 // src/customer/customer.service.ts
+import * as dotenv from 'dotenv';
+dotenv.config();
 import {
   Injectable,
   NotFoundException,
@@ -22,6 +24,7 @@ import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginCustomerDto } from './dto/login-customer.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { MailerService } from '@nestjs-modules/mailer/dist';
 
 @Injectable()
 export class CustomerService {
@@ -32,7 +35,8 @@ export class CustomerService {
     @InjectRepository(Flight) private flightRepo: Repository<Flight>,
     @InjectRepository(Passenger) private passengerRepo: Repository<Passenger>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
-    private jwtService: JwtService,   // ← MUST INJECT
+    private jwtService: JwtService,
+    private mailerService: MailerService,   
   ) {}
 
 // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
@@ -110,7 +114,13 @@ export class CustomerService {
         amount: 999,
         method: dto.paymentMethod,
       });
-    }
+    };
+
+       await this.mailerService.sendMail({
+        to: process.env.ADMIN_MAIL,
+        subject: "Booking Notification",
+        text: `You have successfully Booked. Access Time: ${new Date().toISOString()}`,
+      });
 
     return this.bookingRepo.save(booking);
   }
