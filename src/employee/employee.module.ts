@@ -10,20 +10,40 @@ import { User } from '../shared/entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RoleGuard } from './auth/role.guard';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
-  imports: [
-    JwtModule.register({
-        secret: 'yourSecretKey', 
-        signOptions: { expiresIn: '1h' },
-    }),
-    TypeOrmModule.forFeature([Booking, Payment, Passenger, Flight, User])],
+imports: [
+  JwtModule.register({
+      secret: process.env.JWT_SECRET, 
+      signOptions: { expiresIn: '1h' },
+  }),
+  TypeOrmModule.forFeature([Booking, Payment, Passenger, Flight, User]),
+  MailerModule.forRoot({
+    transport: {
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: process.env.EMPLOYEE_MAIL,
+        pass: process.env.EMPLOYEE_MAIL_PASSWORD,
+      }
+    },
+    defaults: {
+      from: `"No Reply" <${process.env.EMPLOYEE_MAIL}>`
+    }
+  })
+],
+
+
   providers: [EmployeeService, JwtAuthGuard, RoleGuard],
   controllers: [EmployeeController],
   exports: [
     EmployeeService,
     JwtAuthGuard,
     RoleGuard,
+    MailerModule,
   ],
 })
 export class EmployeeModule {}

@@ -14,6 +14,8 @@ import * as jwt from 'jsonwebtoken';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UnauthorizedException } from '@nestjs/common/exceptions';
 import { LoginEmployeeDto } from './dto/login-employee.dto';
+import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class EmployeeService {
@@ -23,7 +25,9 @@ export class EmployeeService {
     @InjectRepository(Passenger) private passengerRepo: Repository<Passenger>,
     private dataSource: DataSource,
     @InjectRepository(Flight) private flightRepo: Repository<Flight>,
+    private jwtService: JwtService,
     @InjectRepository(User) private userRepo: Repository<User>,
+    private mailerService: MailerService,
   ) {}
 
 //registration and Login
@@ -105,7 +109,9 @@ export class EmployeeService {
   }
 
   async addPayment(bookingId: string, dto: CreatePaymentDto) {
-    const booking = await this.bookingRepo.findOne({ where: { id: bookingId }});
+    const booking = await this.bookingRepo.findOne({ where: { id: bookingId },
+      relations: ['customer', 'flight', 'passengers']
+     });
     if (!booking) throw new NotFoundException('Booking not found');
 
     // Use transaction to attach payment
@@ -117,7 +123,16 @@ export class EmployeeService {
       // optional: set booking.status = 'paid'
       booking.status = 'paid';
       await manager.save(Booking, booking);
-      return saved;
+
+      //send email
+      await this.sendticketEmail(booking.customer.email, booking);
+
+      return {
+        message: "Payment Successful. Ticket sent to customer email",
+        bookingId: booking.id,
+        payment: saved
+
+      }; 
     });
   }
 
@@ -176,4 +191,28 @@ export class EmployeeService {
     booking.status = 'checked-in';
     return this.bookingRepo.save(booking);
   }
+
+  //Ticket emailing
+  async sendticketEmail(customerEmail: string, booking: Booking) {
+    const flight = booking.flight;
+
+    await this.mailerService.sendMail({
+      to: customerEmail,
+      subject: `Your Flight Ticket Confirmation - Booking ID: ${booking.id}`,
+      html: `
+      <h2>Your Flight Ticket is Confirmed!</h2>
+      <p>Dear Customer,</p>
+      <p>Your booking has been successfully confirmed. Here are your ticket details:</p>
+
+      <h3>Booking Details:</h3>
+      <ul>
+        <li><strong>Booking ID:</strong> ${booking.id}</li>
+        <li><strong>Flight Number:</strong> ${flight.flightNumber}</li>
+      </ul>
+
+      <p>We wish you a pleasant flight!</p>
+      `,
+    });
+  }
+
 }
