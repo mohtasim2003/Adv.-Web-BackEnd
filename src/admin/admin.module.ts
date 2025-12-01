@@ -3,7 +3,7 @@ dotenv.config();
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { AdminLogin } from './dto/admin.entity';
+//import { AdminLogin } from './dto/admin.entity';
 
 import { AdminService } from './admin.service';
 import { User } from 'src/shared/entities/user.entity';
@@ -20,7 +20,7 @@ import { AdminController } from './admin.controller';
       secret: process.env.JWT_SECRET, 
       signOptions: { expiresIn: '1h' },
     }),
-    TypeOrmModule.forFeature([AdminLogin,Aircraft, User,Flight]),
+    TypeOrmModule.forFeature([Aircraft, User,Flight]),
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',

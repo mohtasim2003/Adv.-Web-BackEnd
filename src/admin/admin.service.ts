@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { AdminLogin } from './dto/admin.entity';
 import { CreateAircraftDto } from './dto/aircraft.dto';
 import { Aircraft } from 'src/shared/entities/aircraft.entity';
 import { User, UserRole } from 'src/shared/entities/user.entity';
@@ -52,7 +51,7 @@ export class AdminService {
       return { message: 'Invalid password' };
     }
   }
-
+/*
   async createAdmin(adminData: AdminLogin): Promise<object> {
     const salt = await bcrypt.genSalt();
     const admin = new User();
@@ -60,8 +59,9 @@ export class AdminService {
     admin.password = await bcrypt.hash(adminData.password, salt);
     admin.role = UserRole.ADMIN;
     return this.AdminLoginRepository.save(admin);
-  }
+  }*/
 
+  
   async createAircraft(aircraftData: CreateAircraftDto): Promise<object> {
     return this.AircraftRepository.save(aircraftData);
   }
@@ -154,7 +154,7 @@ export class AdminService {
   }
 
   async deleteEmployee(id: string): Promise<object> {
-    const employee = await this.AdminLoginRepository.findOne({ where: { id: id, role: UserRole.CUSTOMER } });
+    const employee = await this.AdminLoginRepository.findOne({ where: { id: id, role: UserRole.EMPLOYEE } });
     if (!employee) {
       return { message: 'Employee not found' };
     }

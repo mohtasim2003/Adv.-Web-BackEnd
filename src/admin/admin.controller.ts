@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, Query, Res, Session, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
 import { AdminService } from "./admin.service";
-import { AdminLogin } from "./dto/admin.entity";
 import { AdminDto } from "./dto/admin.dto";
 import { CreateAircraftDto } from "./dto/aircraft.dto";
 import { EmployeeDto } from "./dto/employee.dto";
