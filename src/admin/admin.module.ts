@@ -17,7 +17,7 @@ import { AdminController } from './admin.controller';
   imports: [
     
     JwtModule.register({
-      secret: 'yourSecretKey', 
+      secret: process.env.JWT_SECRET, 
       signOptions: { expiresIn: '1h' },
     }),
     TypeOrmModule.forFeature([AdminLogin,Aircraft, User,Flight]),
