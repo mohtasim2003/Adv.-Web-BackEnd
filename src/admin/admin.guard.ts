@@ -20,14 +20,14 @@ export class JwtGuard implements CanActivate {
     try {
       const payload = this.jwtService.verify(token);
       if (payload.role !== 'admin') {
-        throw new HttpException(
-          'Unauthorized: Not an admin',
-          HttpStatus.FORBIDDEN,
-        );
+        throw new HttpException('Unauthorized: Not an admin', HttpStatus.FORBIDDEN);
       }
       request.user = payload;
       return true;
-    } catch {
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new HttpException('Token expired', HttpStatus.UNAUTHORIZED);
+      }
       throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
   }

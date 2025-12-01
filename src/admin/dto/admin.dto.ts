@@ -2,7 +2,7 @@ import { IsEmail, IsString, MaxLength, MinLength } from "class-validator";
 
 export class AdminDto {
     @IsEmail()
-    mail: string;
+    email: string;
 
     @IsString()
     @MinLength(8)

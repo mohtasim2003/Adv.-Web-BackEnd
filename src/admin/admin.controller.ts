@@ -4,6 +4,7 @@ import { AdminDto } from "./dto/admin.dto";
 import { CreateAircraftDto } from "./dto/aircraft.dto";
 import { EmployeeDto } from "./dto/employee.dto";
 import { JwtGuard } from "./admin.guard";
+import { CreateFlightDto, UpdateAircraftDto } from "./dto/flight.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -12,7 +13,7 @@ export class AdminController {
     @Post('login')
     @UsePipes(new ValidationPipe())
     async login(@Body() body: AdminDto): Promise<object> {
-        return this.adminService.login(body.mail, body.password);
+        return this.adminService.login(body.email, body.password);
     }
 
     
@@ -28,7 +29,7 @@ export class AdminController {
     @Put('aircraft/:id')
     @UseGuards(JwtGuard)
     @UsePipes(new ValidationPipe())
-    async updateAircraft(@Param('id', ParseUUIDPipe) id: string, @Body() aircraftData: CreateAircraftDto): Promise<object> {
+    async updateAircraft(@Param('id', ParseUUIDPipe) id: string, @Body() aircraftData: UpdateAircraftDto): Promise<object> {
         return this.adminService.updateAircraft(id, aircraftData);
     }
     
@@ -57,18 +58,41 @@ export class AdminController {
         return this.adminService.updateAircraftStatus(id, status);
     }
 
-    @Post('createflight')
+    /*@Post('addflighttoaircraft')
     @UseGuards(JwtGuard)
     @UsePipes(new ValidationPipe())
-    async createFlight(@Body() flightData: any): Promise<object> {
-        return this.adminService.createFlight(flightData);
+    async addFlight(@Body() flightData: CreateFlightDto): Promise<object> {
+        return this.adminService.addFlight(flightData);
+    }*/
+
+    @Post('aircraft/:id/addflight')
+    @UseGuards(JwtGuard)
+    @UsePipes(new ValidationPipe())
+    async addFlightToAircraft(@Param('id', ParseUUIDPipe) id: string, @Body() flightData: CreateFlightDto): Promise<object> {
+        return this.adminService.addFlightToAircraft(id, flightData);
     }
+
+    @Get('aircraft/:id/flights')
+    @UseGuards(JwtGuard)
+    async getAllFlightForAircraft(@Param('id', ParseUUIDPipe) id: string): Promise<object> {
+        return this.adminService.getAllFlightForAircraft(id);
+    }
+
+    @Delete('aircraft/:id/flight/:flightId')
+    @UseGuards(JwtGuard)
+    async deleteFlightFromAircraft(@Param('id', ParseUUIDPipe) id: string, @Param('flightid', ParseUUIDPipe) flightid: string): Promise<object> {
+        return this.adminService.deleteFlightFromAircraft(id, flightid);
+    }
+
 
     @Get('getallflight')
     @UseGuards(JwtGuard)
     async getAllFlight(): Promise<object> {
         return this.adminService.getAllFlight();
-    }
+    }   
+
+
+    
 
     @Patch('flight/status/:id')
     @UseGuards(JwtGuard)
@@ -76,15 +100,12 @@ export class AdminController {
         return this.adminService.updateFlightStatus(id, status);
     }
 
-    @Delete('flight/:id')
-    @UseGuards(JwtGuard)
-    async deleteFlight(@Param('id', ParseUUIDPipe) id: string): Promise<object> {
-        return this.adminService.deleteFlight(id);
-    }
+    
 
 
     @Post('createemployee')
     @UseGuards(JwtGuard)
+    @UsePipes(new ValidationPipe())
     async createEmployee(@Body() employeeData: EmployeeDto): Promise<object> {
         return this.adminService.createEmployee(employeeData);
     }
