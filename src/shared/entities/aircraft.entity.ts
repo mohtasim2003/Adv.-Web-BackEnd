@@ -18,6 +18,6 @@ export class Aircraft {
   @Column({ default: 'active' })
   status: string;
 
-  @OneToMany(() => Flight, (flight) => flight.aircraft)
+  @OneToMany(() => Flight, (flight) => flight.aircraft, { cascade: true })
   flights: Flight[];
 }

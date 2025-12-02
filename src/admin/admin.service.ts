@@ -254,7 +254,6 @@ async addFlight(flightData: CreateFlightDto): Promise<object> {
     employee.email = employeeData.email;
     employee.password = await bcrypt.hash(employeeData.password, salt);
     employee.role = UserRole.EMPLOYEE;
-    //send mail to employee
     try {
       await this.mailerService.sendMail({
         to: employeeData.email,
