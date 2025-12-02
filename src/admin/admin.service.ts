@@ -44,7 +44,7 @@ export class AdminService {
 
     try {
       await this.mailerService.sendMail({
-        to: process.env.ADMIN_MAIL,
+        to: admin.email,
         subject: "Admin Login Notification",
         text: `You have successfully logged in as an admin. Access Time: ${new Date().toISOString()}`,
       });
@@ -245,21 +245,21 @@ async addFlight(flightData: CreateFlightDto): Promise<object> {
 
 
   async createEmployee(employeeData: EmployeeDto): Promise<object> {
-    const find = await this.UserRepository.findOne({ where: { email: employeeData.mail } });
+    const find = await this.UserRepository.findOne({ where: { email: employeeData.email } });
     if (find) {
       throw new HttpException('Employee with this email already exists', HttpStatus.CONFLICT);
     }
     const salt = await bcrypt.genSalt();
     const employee = new User();
-    employee.email = employeeData.mail;
+    employee.email = employeeData.email;
     employee.password = await bcrypt.hash(employeeData.password, salt);
     employee.role = UserRole.EMPLOYEE;
     //send mail to employee
     try {
       await this.mailerService.sendMail({
-        to: employeeData.mail,
+        to: employeeData.email,
         subject: "Welcome to the Team!",
-        text: `You have been added as an employee. Your login email is: ${employeeData.mail}. If you have any questions, please contact admin. Access Time: ${new Date().toISOString()}`,
+        text: `You have been added as an employee. Your login email is: ${employeeData.email}. If you have any questions, please contact admin. Access Time: ${new Date().toISOString()}`,
       });
     } catch (error) {
       console.error('Mailer failed:', error); 
