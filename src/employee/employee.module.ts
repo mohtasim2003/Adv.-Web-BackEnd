@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmployeeService } from './employee.service';
@@ -26,13 +28,10 @@ imports: [
       secure: false,
       requireTLS: true,
       auth: {
-        user: process.env.EMPLOYEE_MAIL,
-        pass: process.env.EMPLOYEE_MAIL_PASSWORD,
+        user: process.env.ADMIN_MAIL,
+        pass: process.env.ADMIN_MAIL_PASSWORD,
       }
     },
-    defaults: {
-      from: `"No Reply" <${process.env.EMPLOYEE_MAIL}>`
-    }
   })
 ],
 

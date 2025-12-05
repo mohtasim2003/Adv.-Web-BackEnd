@@ -14,5 +14,5 @@ export class Payment {
   amount: number;
 
   @Column()
-  method: string; // e.g., 'card', 'cash', 'bkash'
+  method: string; 
 }

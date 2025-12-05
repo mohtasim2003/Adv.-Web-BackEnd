@@ -74,7 +74,7 @@ export class EmployeeController {
         return this.employeeService.deleteBooking(id);
     }
 
-    @Post('bookinga/:bookingId/payment')
+    @Post('bookings/:bookingId/payment')
     createPayment(
         @Param('bookingId', new ParseUUIDPipe()) bookingId: string,
         @Body(new ValidationPipe({whitelist: true})) dto: CreatePaymentDto

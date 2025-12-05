@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import {Passenger} from "./passenger.entity";
 import {Flight} from "./flight.entity";
 import {Payment} from "../../employee/entities/payment.entity";
@@ -20,8 +20,9 @@ export class Booking {
   @Column({ default: 'pending' }) 
   status: string; 
   
-  @OneToOne(() => Payment, payment => payment.booking, { cascade: true })
-  payment: Payment;
+  // inverse side - no JoinColumn here
+  @OneToOne(() => Payment, payment => payment.booking, { nullable: true })
+  payment?: Payment;
 
   @OneToMany(() => Passenger, passenger => passenger.booking, { cascade: true })
   passengers: Passenger[]; 

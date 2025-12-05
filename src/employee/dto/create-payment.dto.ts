@@ -2,7 +2,7 @@ import { IsNumber, IsString, Min } from "class-validator";
 
 export class CreatePaymentDto {
     @IsNumber()
-    @Min(0)
+    @Min(1)
     amount: number;
 
     @IsString()

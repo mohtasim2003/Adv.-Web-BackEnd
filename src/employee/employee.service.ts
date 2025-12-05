@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking } from '../shared/entities/booking.entity';
@@ -16,6 +18,8 @@ import { UnauthorizedException } from '@nestjs/common/exceptions';
 import { LoginEmployeeDto } from './dto/login-employee.dto';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
+import { UpdateBookingDto } from './dto/update-booking.dto';
+
 
 @Injectable()
 export class EmployeeService {
@@ -51,6 +55,7 @@ export class EmployeeService {
 
     await this.userRepo.save(employee);
 
+    
     return {
       message: "Employee registered successfully",
       employeeId: employee.id
@@ -70,6 +75,8 @@ export class EmployeeService {
     if (!match) {
       throw new UnauthorizedException("Invalid credentials");
     }
+
+    
 
     // Generate JWT token
     const token = jwt.sign(
@@ -108,32 +115,61 @@ export class EmployeeService {
     });
   }
 
+
+  //upated
   async addPayment(bookingId: string, dto: CreatePaymentDto) {
-    const booking = await this.bookingRepo.findOne({ where: { id: bookingId },
-      relations: ['customer', 'flight', 'passengers']
-     });
-    if (!booking) throw new NotFoundException('Booking not found');
+    let savedPayment: Payment;
+    let booking: Booking | null = null;
 
-    // Use transaction to attach payment
-    return await this.dataSource.transaction(async manager => {
-      const payment = manager.create(Payment, { ...dto, booking });
-      const saved = await manager.save(payment);
-      booking.payment = saved;
-      await manager.save(Booking, booking);
-      // optional: set booking.status = 'paid'
-      booking.status = 'paid';
-      await manager.save(Booking, booking);
+    await this.dataSource.transaction(async (manager) => {
+      // Find booking with relations
+      booking = await manager.findOne(Booking, {
+        where: { id: bookingId },
+        relations: ['customer', 'flight', 'passengers', 'payment'],
+      });
 
-      //send email
-      await this.sendticketEmail(booking.customer.email, booking);
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
 
-      return {
-        message: "Payment Successful. Ticket sent to customer email",
-        bookingId: booking.id,
-        payment: saved
+      if (booking.payment) {
+        throw new BadRequestException('This booking already has a payment');
+      }
 
-      }; 
+      const payment = manager.create(Payment, {
+        amount: dto.amount,
+        method: dto.method,
+        booking: booking,
+      });
+
+      savedPayment = await manager.save(Payment, payment);
+
+      await manager.update(Booking, bookingId, { status: 'paid' });
     });
+
+    // Send ticket email AFTER transaction
+   await this.mailerService.sendMail({
+        //to: process.env.ADMIN_MAIL,
+        to: booking?.customer.email,
+        subject: "Payment Successful - Ticket Issued",
+        text: `You have successfully paid. at: ${new Date().toISOString()}
+      Dear Customer,
+
+      Your payment for booking ID: ${bookingId} has been successfully processed. Here are your ticket details:
+        
+          Booking ID: ${bookingId}
+          Flight Number: ${booking?.flight.flightNumber}
+          
+      We wish you a pleasant flight!
+      Thank you for choosing our airline.`,
+      });
+
+    return {
+      message: 'Payment Successful. Ticket sent to customer email.',
+      bookingId,
+      payment: savedPayment,
+      status: 'paid',
+    };
   }
 
   async getBookings() {
@@ -146,10 +182,16 @@ export class EmployeeService {
     return b;
   }
 
-  async updateBooking(id: string, dto: Partial<Booking>) {
-    await this.bookingRepo.update(id, dto);
-    return this.getBooking(id);
+//updated
+  async updateBooking(id: string, updateBookingDto: UpdateBookingDto) {
+  const result = await this.bookingRepo.update(id, updateBookingDto);
+
+  if (result.affected === 0) {
+    throw new NotFoundException('Booking not found');
   }
+
+  return { message: 'Booking updated successfully' };
+}
 
   async deleteBooking(id: string) {
     const res = await this.bookingRepo.delete(id);
@@ -163,16 +205,21 @@ export class EmployeeService {
     return this.passengerRepo.save(created);
   }
 
+  ///update
   async updateBookingStatus(id: string, status: string) {
-    const booking = await this.bookingRepo.findOne({ where: { id }});
-    if (!booking) throw new NotFoundException('Booking not found');
-    const allowed =['Pending', 'paid', 'checked-in', 'cancelled'];
-    if (!allowed.includes(status)) {
-        throw new BadRequestException('Invalid status value: ${status}');
-    }
-    booking.status = status;
-    return this.bookingRepo.save(booking);
+  const allowed = ['pending', 'paid', 'checked-in', 'cancelled'];
+  if (!allowed.includes(status)) {
+    throw new BadRequestException(`Invalid status. Allowed: ${allowed.join(', ')}`);
   }
+
+  const result = await this.bookingRepo.update(id, { status });
+
+  if (result.affected === 0) {
+    throw new NotFoundException('Booking not found');
+  }
+
+  return { message: 'Status updated', status };
+}
 
 
   async listPassengers(bookingId: string) {
@@ -185,12 +232,18 @@ export class EmployeeService {
     return { deleted: true };
   }
 
+
+  //updated
   async checkin(bookingId: string) {
-    const booking = await this.getBooking(bookingId);
-    if (booking.status !== 'paid') throw new BadRequestException('Booking must be paid to check in');
-    booking.status = 'checked-in';
-    return this.bookingRepo.save(booking);
-  }
+  const booking = await this.bookingRepo.findOne({ where: { id: bookingId } });
+  if (!booking) throw new NotFoundException('Booking not found');
+  if (booking.status !== 'paid') throw new BadRequestException('Must be paid first');
+
+  await this.bookingRepo.update(bookingId, { status: 'checked-in' });
+
+  return { message: 'Check-in successful', status: 'checked-in' };
+}
+/*
 
   //Ticket emailing
   async sendticketEmail(customerEmail: string, booking: Booking) {
@@ -215,4 +268,21 @@ export class EmployeeService {
     });
   }
 
+  //employee registartion mail
+  async sendRegistrationEmail(employeeEmail: string, employeeName: string) {
+    await this.mailerService.sendMail({
+      to: employeeEmail,
+      subject: `Welcome to the Airline Team, ${employeeName}!`,
+      html: `
+      <h2>Welcome Aboard, ${employeeName}!</h2>
+      <p>Dear ${employeeName},</p>
+      <p>We are thrilled to have you join our airline team as an employee. Your skills and dedication will be a valuable 
+        addition to our mission of providing exceptional service to our passengers.</p>
+      <p>We look forward to working with you and achieving great heights together!</p>
+
+      <p>Best Regards,<br/>Airline Management</p> 
+      `,
+    });
+  }
+*/
 }
