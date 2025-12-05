@@ -7,7 +7,7 @@ export class Profile {
   id: string;
 
   @OneToOne(() => User, user => user.profile)
-  @JoinColumn() // Profile owns the FK
+  @JoinColumn()
   user: User;
 
   @Column({ nullable: true })

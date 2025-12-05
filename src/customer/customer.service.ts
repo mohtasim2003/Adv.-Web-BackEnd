@@ -1,4 +1,6 @@
 // src/customer/customer.service.ts
+import * as dotenv from 'dotenv';
+dotenv.config();
 import {
   Injectable,
   NotFoundException,
@@ -22,6 +24,7 @@ import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginCustomerDto } from './dto/login-customer.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { MailerService } from '@nestjs-modules/mailer/dist';
 
 @Injectable()
 export class CustomerService {
@@ -32,10 +35,11 @@ export class CustomerService {
     @InjectRepository(Flight) private flightRepo: Repository<Flight>,
     @InjectRepository(Passenger) private passengerRepo: Repository<Passenger>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
-    private jwtService: JwtService,   // ← MUST INJECT
+    private jwtService: JwtService,
+    private mailerService: MailerService,
   ) {}
 
-// REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
+  // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
   async registerCustomer(dto: RegisterCustomerDto) {
     const exists = await this.userRepo.findOne({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email already registered');
@@ -57,7 +61,11 @@ export class CustomerService {
       }),
     );
 
-    return { message: 'Registered successfully', email: user.email, password: user.password };
+    return {
+      message: 'Registered successfully',
+      email: user.email,
+      password: user.password,
+    };
   }
 
   // LOGIN + JWT – Load profile from Profile table only
@@ -89,13 +97,15 @@ export class CustomerService {
 
   // ALL OTHER METHODS REMAIN SAME (createBooking, getMyBookings, etc.)
   async createBooking(userId: string, dto: CreateBookingDto) {
-    const flight = await this.flightRepo.findOne({ where: { id: dto.flightId } });
+    const flight = await this.flightRepo.findOne({
+      where: { id: dto.flightId },
+    });
     if (!flight) throw new NotFoundException('Flight not found');
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const passengers = dto.passengers.map(p => this.passengerRepo.create(p));
+    const passengers = dto.passengers.map((p) => this.passengerRepo.create(p));
 
     const booking = this.bookingRepo.create({
       flight,
@@ -112,6 +122,12 @@ export class CustomerService {
       });
     }
 
+    await this.mailerService.sendMail({
+      to: process.env.ADMIN_MAIL,
+      subject: 'Booking Notification',
+      text: `You have successfully Booked. Access Time: ${new Date().toISOString()}`,
+    });
+
     return this.bookingRepo.save(booking);
   }
 
@@ -121,6 +137,30 @@ export class CustomerService {
       where: { customer: { id: userId } },
       relations: ['flight', 'passengers', 'payment'],
     });
+  }
+
+  async deleteBooking(userId: string, bookingId: string) {
+    // Load booking with customer and related entities
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['customer', 'passengers', 'payment'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // Prevent users from deleting others’ bookings
+    if (booking.customer.id !== userId) {
+      throw new ForbiddenException(
+        'You are not allowed to delete this booking',
+      );
+    }
+
+    // Delete booking (will cascade and remove passengers + payment)
+    await this.bookingRepo.remove(booking);
+
+    return { message: 'Booking deleted successfully' };
   }
 
   async getBooking(userId: string, bookingId: string) {
@@ -134,20 +174,26 @@ export class CustomerService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['profile'] });
-    return user?.profile || { name: '', phone: '', address: '' };
+    const profile = await this.profileRepo.findOne({
+      where: { user: { id: userId } },
+    });
+    return profile || { name: '', phone: '', address: '', loyaltyPoints: 0 };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
-    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['profile'] });
-    if (!user) throw new NotFoundException();
+    let profile = await this.profileRepo.findOne({
+      where: { user: { id: userId } },
+    });
 
-    if (!user.profile) {
-      user.profile = this.profileRepo.create({ ...dto, user });
+    if (!profile) {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException();
+      profile = this.profileRepo.create({ ...dto, user });
     } else {
-      Object.assign(user.profile, dto);
+      Object.assign(profile, dto);
     }
-    await this.userRepo.save(user);
-    return user.profile;
+
+    // Save directly via profileRepo
+    return this.profileRepo.save(profile);
   }
 }

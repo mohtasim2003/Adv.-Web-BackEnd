@@ -1,11 +1,24 @@
 // src/customer/customer.controller.ts
-import { Controller, Post, Body, Get, Param, Put, UseGuards, Req, UsePipes, ValidationPipe, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Put,
+  UseGuards,
+  Req,
+  UsePipes,
+  ValidationPipe,
+  ParseUUIDPipe,
+  Delete,
+} from '@nestjs/common';
 import { CustomerService } from './customer.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginCustomerDto } from './dto/login-customer.dto';
-import { CustomerGuard } from './auth/customer.guard';  // ← YOUR OWN GUARD
+import { CustomerGuard } from './auth/customer.guard'; // ← YOUR OWN GUARD
 
 @Controller('customer')
 export class CustomerController {
@@ -41,6 +54,12 @@ export class CustomerController {
   @Get('bookings/:id')
   getBooking(@Req() req, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.getBooking(req.user.sub, id);
+  }
+
+  @UseGuards(CustomerGuard)
+  @Delete('bookings/:id')
+  deleteBooking(@Req() req, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteBooking(req.user.sub, id);
   }
 
   @UseGuards(CustomerGuard)

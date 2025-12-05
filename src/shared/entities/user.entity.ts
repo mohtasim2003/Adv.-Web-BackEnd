@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, OneToOne } from 'typeorm';
 import { Booking } from './booking.entity';
+import { Profile } from 'src/customer/entities/profile.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -30,4 +31,7 @@ export class User {
 
   @OneToMany(() => Booking, (booking) => booking.customer)
   bookings: Booking[];
+
+  @OneToOne(() => Profile, profile => profile.user)
+  profile: Profile; 
 }
