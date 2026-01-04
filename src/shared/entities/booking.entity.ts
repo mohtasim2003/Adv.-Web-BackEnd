@@ -15,7 +15,6 @@ export class Booking {
   @ManyToOne(() => User)
   customer: User;
 
-<<<<<<< HEAD
   @Column() 
   bookingDate: Date; 
   @Column({ default: 'pending' }) 
@@ -28,19 +27,3 @@ export class Booking {
   @OneToMany(() => Passenger, passenger => passenger.booking, { cascade: true })
   passengers: Passenger[]; 
 }
-=======
-  @Column()
-  bookingDate: Date;
-  @Column({ default: 'pending' })
-  status: string;
-
-  @OneToOne(() => Payment, (payment) => payment.booking, { cascade: true })
-  @JoinColumn()
-  payment: Payment;
-
-  @OneToMany(() => Passenger, (passenger) => passenger.booking, {
-    cascade: true,
-  })
-  passengers: Passenger[];
-}
->>>>>>> 03b714da24637d82f077ba0aa5f4cd1bab0147e2

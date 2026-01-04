@@ -13,14 +13,24 @@ export class JwtGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const token = request.headers.authorization?.split(' ')[1];
+    console.log('Request cookies:', request.cookies);
+    // Try to get token from Authorization header
+    let token = request.headers.authorization?.split(' ')[1];
+    // If not found, try to get from cookie
+    //console.log(request);
+    if (!token && request.cookies && request.cookies.accessToken) {
+      token = request.cookies.accessToken;
+    }
     if (!token) {
       throw new HttpException('No token', HttpStatus.UNAUTHORIZED);
     }
     try {
       const payload = this.jwtService.verify(token);
       if (payload.role !== 'admin') {
-        throw new HttpException('Unauthorized: Not an admin', HttpStatus.FORBIDDEN);
+        throw new HttpException(
+          'Unauthorized: Not an admin',
+          HttpStatus.FORBIDDEN,
+        );
       }
       request.user = payload;
       return true;

@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, Query, Res, Session, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Response } from 'express';
 import { AdminService } from "./admin.service";
 import { AdminDto } from "./dto/admin.dto";
 import { CreateAircraftDto } from "./dto/aircraft.dto";
@@ -12,13 +13,17 @@ export class AdminController {
 
     @Post('login')
     @UsePipes(new ValidationPipe())
-    async login(@Body() body: AdminDto): Promise<object> {
-        return this.adminService.login(body.email, body.password);
+    async login(@Body() body: AdminDto, @Res() res: Response): Promise<object> {
+        const result = await this.adminService.login(body.email, body.password);
+        if (result && result['accessToken']) {
+            //console.log('Setting cookie with token:', result['accessToken']);
+            
+            return res.json({ message: 'Login successful' , token: result['accessToken'] });
+        } else {
+            return res.status(401).json({ message: 'Login failed' });
+        }
     }
 
-    
-    
-    
     @Post('aircraft')
     @UseGuards(JwtGuard)
     @UsePipes(new ValidationPipe())

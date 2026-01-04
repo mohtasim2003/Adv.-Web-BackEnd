@@ -42,7 +42,7 @@ export class AdminService {
       const payload = { email: admin.email, role: 'admin' };
       const token = this.jwtService.sign(payload);
 
-    try {
+    /*try {
       await this.mailerService.sendMail({
         to: admin.email,
         subject: "Admin Login Notification",
@@ -50,7 +50,7 @@ export class AdminService {
       });
       } catch (error) {
         console.error('Mailer failed:', error);  // Or throw HttpException if you want, but keep login success
-        }
+        }*/
       return { accessToken: token };
     } else {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
