@@ -12,13 +12,14 @@ import {
   ValidationPipe,
   ParseUUIDPipe,
   Delete,
+  Res,
 } from '@nestjs/common';
 import { CustomerService } from './customer.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginCustomerDto } from './dto/login-customer.dto';
-import { CustomerGuard } from './auth/customer.guard'; // ← YOUR OWN GUARD
+import { CustomerGuard } from './auth/customer.guard';
 
 @Controller('customer')
 export class CustomerController {
@@ -33,8 +34,20 @@ export class CustomerController {
 
   @Post('login')
   @UsePipes(ValidationPipe)
-  login(@Body() dto: LoginCustomerDto) {
-    return this.service.loginCustomer(dto);
+  async login(@Body() dto: LoginCustomerDto, @Res({ passthrough: true }) res) {
+    const result = this.service.loginCustomer(dto);
+
+    // Set HTTP ONLY COOKIE
+    res.cookie('access_token', (await result).access_token, {
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    return {
+      message: 'Login success',
+      user: (await result).user,
+    };
   }
 
   // PROTECTED - ONLY CUSTOMER WITH VALID JWT
@@ -72,5 +85,10 @@ export class CustomerController {
   @Put('me')
   updateProfile(@Req() req, @Body() dto: UpdateProfileDto) {
     return this.service.updateProfile(req.user.sub, dto);
+  }
+  @UseGuards(CustomerGuard)
+  @Delete('me/:id')
+  deleteProfile(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteProfile(id);
   }
 }
