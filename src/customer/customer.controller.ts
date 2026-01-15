@@ -20,6 +20,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginCustomerDto } from './dto/login-customer.dto';
 import { CustomerGuard } from './auth/customer.guard';
+import { Response } from 'express';
 
 @Controller('customer')
 export class CustomerController {
@@ -48,6 +49,18 @@ export class CustomerController {
       message: 'Login success',
       user: (await result).user,
     };
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.cookie('access_token', '', {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: false,
+      path: '/',
+    });
+
+    return { message: 'Logged out successfully' };
   }
 
   // PROTECTED - ONLY CUSTOMER WITH VALID JWT
@@ -90,5 +103,10 @@ export class CustomerController {
   @Delete('me/:id')
   deleteProfile(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.deleteProfile(id);
+  }
+
+  @Get('getallflight')
+  async getAllFlight(): Promise<object> {
+    return this.service.getAllFlight();
   }
 }

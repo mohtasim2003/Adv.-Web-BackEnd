@@ -37,6 +37,8 @@ export class CustomerService {
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
     private jwtService: JwtService,
     private mailerService: MailerService,
+    @InjectRepository(Flight)
+    private FlightRepository: Repository<Flight>,
   ) {}
 
   // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
@@ -139,14 +141,12 @@ export class CustomerService {
     });
   }
 
-  async deleteProfile(userId:string){
+  async deleteProfile(userId: string) {
     const profile = await this.userRepo.delete({
-       id: userId  ,
-    })
+      id: userId,
+    });
 
     return { message: ' deleted successfully' };
-
-    
   }
 
   async deleteBooking(userId: string, bookingId: string) {
@@ -207,5 +207,11 @@ export class CustomerService {
     return this.profileRepo.save(profile);
   }
 
-  
+  async getAllFlight(): Promise<object> {
+    const flights = await this.FlightRepository.find();
+    if (!flights || flights.length === 0) {
+     return {msg:"Flight Not Found"}
+    }
+    return flights;
+  }
 }
