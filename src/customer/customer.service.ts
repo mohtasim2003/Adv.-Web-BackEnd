@@ -139,6 +139,16 @@ export class CustomerService {
     });
   }
 
+  async deleteProfile(userId:string){
+    const profile = await this.userRepo.delete({
+       id: userId  ,
+    })
+
+    return { message: ' deleted successfully' };
+
+    
+  }
+
   async deleteBooking(userId: string, bookingId: string) {
     // Load booking with customer and related entities
     const booking = await this.bookingRepo.findOne({
@@ -196,4 +206,6 @@ export class CustomerService {
     // Save directly via profileRepo
     return this.profileRepo.save(profile);
   }
+
+  
 }
