@@ -23,7 +23,7 @@ export class Flight {
   @Column({ default: 'scheduled' })
   status: string;
 
-  @Column({ type: 'decimal' })
+  @Column({ type: 'decimal' ,nullable:true})
   price: number;
 
   @ManyToOne(() => Aircraft, (aircraft) => aircraft.flights)
