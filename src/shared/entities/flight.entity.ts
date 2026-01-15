@@ -29,7 +29,7 @@ export class Flight {
   @ManyToOne(() => Aircraft, (aircraft) => aircraft.flights)
   aircraft: Aircraft;
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, (user) => user.flights)
   @JoinTable()
   crew: User[];
 

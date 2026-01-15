@@ -11,6 +11,7 @@ import { Aircraft } from 'src/shared/entities/aircraft.entity';
 import { Flight } from 'src/shared/entities/flight.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AdminController } from './admin.controller';
+import { BeamsService } from './beams.service';
 
 
 @Module({
@@ -34,7 +35,7 @@ import { AdminController } from './admin.controller';
 }}),
 ],
   controllers: [AdminController],
-  providers: [AdminService],
-  exports: [AdminService],
+  providers: [AdminService, BeamsService],
+  exports: [AdminService, BeamsService],
 })
 export class AdminModule {}

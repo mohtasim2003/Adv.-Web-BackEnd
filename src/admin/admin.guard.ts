@@ -13,11 +13,7 @@ export class JwtGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    console.log('Request cookies:', request.cookies);
-    // Try to get token from Authorization header
     let token = request.headers.authorization?.split(' ')[1];
-    // If not found, try to get from cookie
-    //console.log(request);
     if (!token && request.cookies && request.cookies.accessToken) {
       token = request.cookies.accessToken;
     }
