@@ -183,7 +183,7 @@ export class AdminService {
       if (!aircraft.flights || aircraft.flights.length === 0) {
           throw new HttpException('No flights found for this aircraft', HttpStatus.NOT_FOUND);
       }
-      return aircraft.flights.map(flight => ({ id: flight.id }));
+      return aircraft.flights;
 
   }
 
