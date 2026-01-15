@@ -37,6 +37,8 @@ export class CustomerService {
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
     private jwtService: JwtService,
     private mailerService: MailerService,
+    @InjectRepository(Flight)
+    private FlightRepository: Repository<Flight>,
   ) {}
 
   // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
@@ -203,5 +205,13 @@ export class CustomerService {
 
     // Save directly via profileRepo
     return this.profileRepo.save(profile);
+  }
+
+  async getAllFlight(): Promise<object> {
+    const flights = await this.FlightRepository.find();
+    if (!flights || flights.length === 0) {
+      return { msg: "Flight Not Found" };
+    }
+    return flights;
   }
 }

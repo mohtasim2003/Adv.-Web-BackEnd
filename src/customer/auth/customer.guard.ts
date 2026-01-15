@@ -1,4 +1,3 @@
-// src/customer/auth/customer.guard.ts
 import {
   Injectable,
   CanActivate,
@@ -16,27 +15,26 @@ export class CustomerGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const path = req.url;
 
-    // Allow register & login without token
+    // Public routes - no token needed
     if (path === "/customer/register" || path === "/customer/login") {
       return true;
     }
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw new UnauthorizedException("No token provided");
-    }
+    // Get token from cookie instead of Authorization header
+    const token = req.cookies?.access_token;
 
-    const token = authHeader.split(" ")[1];
+    if (!token) {
+      throw new UnauthorizedException("No authentication token found");
+    }
 
     try {
       const payload = this.jwtService.verify(token);
 
-      // Force customer role
       if (payload.role !== "customer") {
-        throw new ForbiddenException("Access denied – Customers only");
+        throw new ForbiddenException("Access denied – customer only");
       }
 
-      req.user = payload; // req.user.sub, req.user.role now available
+      req.user = payload;
       return true;
     } catch (error) {
       throw new UnauthorizedException("Invalid or expired token");

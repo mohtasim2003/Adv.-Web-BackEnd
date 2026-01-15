@@ -9,6 +9,9 @@ import {
 import { Booking } from "./booking.entity";
 import { Profile } from "src/customer/entities/profile.entity";
 
+import { ManyToMany } from "typeorm";
+import { Flight } from "./flight.entity";
+
 export enum UserRole {
   ADMIN = "admin",
   EMPLOYEE = "employee",
@@ -41,4 +44,7 @@ export class User {
 
   @OneToOne(() => Profile, (profile) => profile.user)
   profile: Profile;
+
+  @ManyToMany(() => Flight, (flight) => flight.crew)
+  flights: Flight[];
 }

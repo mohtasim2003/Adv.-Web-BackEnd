@@ -31,10 +31,13 @@ export class Flight {
   @Column({ default: "scheduled" })
   status: string;
 
+  @Column({ type: 'decimal' ,nullable:true})
+  price: number;
+
   @ManyToOne(() => Aircraft, (aircraft) => aircraft.flights)
   aircraft: Aircraft;
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, (user) => user.flights)
   @JoinTable()
   crew: User[];
 
