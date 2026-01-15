@@ -1,9 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Flight } from './flight.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Flight } from "./flight.entity";
 
 @Entity()
 export class Aircraft {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -12,10 +12,10 @@ export class Aircraft {
   @Column()
   registration: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   capacity: number;
 
-  @Column({ default: 'active' })
+  @Column({ default: "active" })
   status: string;
 
   @OneToMany(() => Flight, (flight) => flight.aircraft, { cascade: true })

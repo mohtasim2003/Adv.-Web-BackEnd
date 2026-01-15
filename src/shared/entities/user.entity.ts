@@ -1,17 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, OneToOne } from 'typeorm';
-import { Booking } from './booking.entity';
-import { Profile } from 'src/customer/entities/profile.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+  OneToOne,
+} from "typeorm";
+import { Booking } from "./booking.entity";
+import { Profile } from "src/customer/entities/profile.entity";
 
 export enum UserRole {
-  ADMIN = 'admin',
-  EMPLOYEE = 'employee',
-  CUSTOMER = 'customer',
+  ADMIN = "admin",
+  EMPLOYEE = "employee",
+  CUSTOMER = "customer",
 }
 
 @Entity()
 export class User {
   [x: string]: any;
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -20,7 +27,7 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER })
+  @Column({ type: "enum", enum: UserRole, default: UserRole.CUSTOMER })
   role: UserRole;
 
   @Column({ default: true })
@@ -32,6 +39,6 @@ export class User {
   @OneToMany(() => Booking, (booking) => booking.customer)
   bookings: Booking[];
 
-  @OneToOne(() => Profile, profile => profile.user)
-  profile: Profile; 
+  @OneToOne(() => Profile, (profile) => profile.user)
+  profile: Profile;
 }

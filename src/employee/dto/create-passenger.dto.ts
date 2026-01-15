@@ -1,9 +1,9 @@
 import { IsString } from "class-validator";
 
 export class CreatePassengerDto {
-    @IsString()
-    name: string;
+  @IsString()
+  name: string;
 
-    @IsString()
-    passportNumber: string;
+  @IsString()
+  passportNumber: string;
 }

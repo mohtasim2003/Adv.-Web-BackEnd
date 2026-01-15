@@ -3,9 +3,9 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../auth/roles.decorator';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { ROLES_KEY } from "../auth/roles.decorator";
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -15,10 +15,7 @@ export class RoleGuard implements CanActivate {
     // get roles required for this route
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
       ROLES_KEY,
-      [
-        context.getHandler(),
-        context.getClass(),
-      ],
+      [context.getHandler(), context.getClass()],
     );
 
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -30,7 +27,7 @@ export class RoleGuard implements CanActivate {
     const user = request.user; // extracted from JWT via AuthGuard
 
     if (!user || !user.role) {
-      throw new ForbiddenException('User role missing');
+      throw new ForbiddenException("User role missing");
     }
 
     // check if user.role matches required roles
@@ -38,7 +35,7 @@ export class RoleGuard implements CanActivate {
 
     if (!hasRole) {
       throw new ForbiddenException(
-        `Access denied: requires role ${requiredRoles.join(', ')}`,
+        `Access denied: requires role ${requiredRoles.join(", ")}`,
       );
     }
 

@@ -1,4 +1,11 @@
-import { IsDateString, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from "class-validator";
 
 export class CreateFlightDto {
   @IsString()
@@ -17,7 +24,6 @@ export class CreateFlightDto {
   aircraftId: string;
 }
 
-
 export class UpdateAircraftDto {
   @IsOptional()
   @IsString()
@@ -35,4 +41,3 @@ export class UpdateAircraftDto {
   @IsString()
   status?: string;
 }
-
