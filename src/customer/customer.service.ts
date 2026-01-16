@@ -25,9 +25,12 @@ import { LoginCustomerDto } from './dto/login-customer.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MailerService } from '@nestjs-modules/mailer/dist';
+import * as Pusher from 'pusher';
+
 
 @Injectable()
 export class CustomerService {
+  private pusher: Pusher;
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Profile) private profileRepo: Repository<Profile>,
@@ -39,7 +42,15 @@ export class CustomerService {
     private mailerService: MailerService,
     @InjectRepository(Flight)
     private FlightRepository: Repository<Flight>,
-  ) {}
+  ) {
+    this.pusher = new Pusher({
+      appId: process.env.PUSHER_APP_ID!,
+      key: process.env.PUSHER_KEY!,
+      secret: process.env.PUSHER_SECRET!,
+      cluster: process.env.PUSHER_CLUSTER!,
+      useTLS: true,
+    });
+  }
 
   // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
   async registerCustomer(dto: RegisterCustomerDto) {
@@ -81,11 +92,13 @@ export class CustomerService {
       where: { user: { id: user.id } },
     });
 
-    const payload = {
-      sub: user.id,
+    const payload = { sub: user.id, email: user.email, role: 'customer' };
+
+    // ✅ PUSHER EVENT
+    await this.pusher.trigger('customer-login', 'logged-in', {
       email: user.email,
-      role: 'customer',
-    };
+      message: `Logged in successfully, ${profile?.name || user.email}!`,
+    });
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -210,7 +223,7 @@ export class CustomerService {
   async getAllFlight(): Promise<object> {
     const flights = await this.FlightRepository.find();
     if (!flights || flights.length === 0) {
-     return {msg:"Flight Not Found"}
+      return { msg: 'Flight Not Found' };
     }
     return flights;
   }
