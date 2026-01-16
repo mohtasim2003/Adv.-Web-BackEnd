@@ -23,7 +23,7 @@ export class AdminController {
     async login(@Body() body: AdminDto, @Res() res: Response): Promise<object> {
         const result = await this.adminService.login(body.email, body.password);
         if (result && result['accessToken']) {
-            return res.json({ message: 'Login successful', token: result['accessToken'] });
+            return res.status(200).json(result);
         } else {
             return res.status(401).json({ message: 'Login failed' });
         }
