@@ -42,10 +42,11 @@ export class AdminService {
       if (!role) {
         throw new HttpException('Not an user', HttpStatus.FORBIDDEN);
       }
-      this.beamsService
-              .sendAdminLoginNotification(user.email)
-              .catch(err => console.error('Beams failed:', err));
-      
+      if (role === 'admin') {
+        this.beamsService
+          .sendAdminLoginNotification(user.email)
+          .catch((err) => console.error('Beams failed:', err));
+      }
       const payload = { email: user.email, role: user.role, sub: user.id };
       const token = this.jwtService.sign(payload);
 
@@ -456,7 +457,7 @@ export class AdminService {
     if (!flight) {
       throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
     }
-    flight.crew = (flight.crew || []).filter(e => e.id !== employeeId);
+    flight.crew = (flight.crew || []).filter((e) => e.id !== employeeId);
     return this.FlightRepository.save(flight);
   }
 }

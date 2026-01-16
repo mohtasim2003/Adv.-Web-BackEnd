@@ -2,8 +2,8 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
-  ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -12,32 +12,29 @@ export class CustomerGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
-    const path = req.url;
-
-    // Public routes - no token needed
-    if (path === '/customer/register' || path === '/customer/login') {
-      return true;
+    const request = context.switchToHttp().getRequest();
+    let token = request.headers.authorization?.split(' ')[1];
+    if (!token && request.cookies && request.cookies.accessToken) {
+      token = request.cookies.accessToken;
     }
-
-    // Get token from cookie instead of Authorization header
-    const token = req.cookies?.access_token;
-
     if (!token) {
-      throw new UnauthorizedException('No authentication token found');
+      throw new HttpException('No token', HttpStatus.UNAUTHORIZED);
     }
-
     try {
       const payload = this.jwtService.verify(token);
-
       if (payload.role !== 'customer') {
-        throw new ForbiddenException('Access denied – customer only');
+        throw new HttpException(
+          'Unauthorized: Not an admin',
+          HttpStatus.FORBIDDEN,
+        );
       }
-
-      req.user = payload;
+      request.user = payload;
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+      if (error.name === 'TokenExpiredError') {
+        throw new HttpException('Token expired', HttpStatus.UNAUTHORIZED);
+      }
+      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
   }
 }

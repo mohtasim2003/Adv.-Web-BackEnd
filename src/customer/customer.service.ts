@@ -197,15 +197,31 @@ export class CustomerService {
   }
 
   async getProfile(userId: string) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'email'],
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
     const profile = await this.profileRepo.findOne({
       where: { user: { id: userId } },
     });
-    return profile || { name: '', phone: '', address: '', loyaltyPoints: 0 };
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: profile?.name || '',
+      phone: profile?.phone || '',
+      address: profile?.address || '',
+      loyaltyPoints: profile?.loyaltyPoints || 0,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     let profile = await this.profileRepo.findOne({
       where: { user: { id: userId } },
+      relations: ['user'], // so we can access email
     });
 
     if (!profile) {
@@ -216,8 +232,14 @@ export class CustomerService {
       Object.assign(profile, dto);
     }
 
-    // Save directly via profileRepo
-    return this.profileRepo.save(profile);
+    const saved = await this.profileRepo.save(profile);
+
+    await this.pusher.trigger(`user-${userId}`, 'profile-updated', {
+      message: 'Profile updated successfully ✅',
+    });
+
+
+    return saved;
   }
 
   async getAllFlight(): Promise<object> {

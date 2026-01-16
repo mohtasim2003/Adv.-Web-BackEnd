@@ -22,10 +22,11 @@ import { MailerModule } from '@nestjs-modules/mailer';
 // import { Profile } from './entities/profile.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Booking, Flight, Passenger, Payment, User, Profile]), JwtModule.register({
-    secret: 'secret123',
-    signOptions: {expiresIn: '24h'},
-  }),
+  imports: [TypeOrmModule.forFeature([Booking, Flight, Passenger, Payment, User, Profile]), 
+  JwtModule.register({
+      secret: process.env.JWT_SECRET, 
+      signOptions: { expiresIn: '1h' },
+    }),
 
    TypeOrmModule.forFeature([Aircraft, User,Flight]),
       MailerModule.forRoot({

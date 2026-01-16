@@ -39,11 +39,14 @@ export class CustomerController {
     const result = this.service.loginCustomer(dto);
 
     // Set HTTP ONLY COOKIE
-    res.cookie('access_token', (await result).access_token, {
+    res.cookie('accessToken', (await result).access_token, {
       httpOnly: true,
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      secure: false,
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000,
     });
+
 
     return {
       message: 'Login success',
@@ -53,14 +56,17 @@ export class CustomerController {
 
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.cookie('access_token', '', {
+    res.clearCookie('accessToken', {
       httpOnly: true,
       sameSite: 'strict',
       secure: false,
       path: '/',
     });
 
+    res.clearCookie('userid', { path: '/' });
+    res.clearCookie('userRole', { path: '/' });
     return { message: 'Logged out successfully' };
+
   }
 
   // PROTECTED - ONLY CUSTOMER WITH VALID JWT
