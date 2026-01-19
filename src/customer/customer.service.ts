@@ -7,7 +7,10 @@ import {
   ForbiddenException,
   UnauthorizedException,
   ConflictException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
+import { BeamsService } from './beams.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -27,7 +30,6 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MailerService } from '@nestjs-modules/mailer/dist';
 import * as Pusher from 'pusher';
 
-
 @Injectable()
 export class CustomerService {
   private pusher: Pusher;
@@ -39,6 +41,7 @@ export class CustomerService {
     @InjectRepository(Passenger) private passengerRepo: Repository<Passenger>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
     private jwtService: JwtService,
+    private beamService: BeamsService,
     private mailerService: MailerService,
     @InjectRepository(Flight)
     private FlightRepository: Repository<Flight>,
@@ -238,7 +241,6 @@ export class CustomerService {
       message: 'Profile updated successfully ✅',
     });
 
-
     return saved;
   }
 
@@ -248,5 +250,42 @@ export class CustomerService {
       return { msg: 'Flight Not Found' };
     }
     return flights;
+  }
+
+  async login(email: string, password: string): Promise<object> {
+    const user = await this.userRepo.findOne({
+      where: { email: email },
+    });
+    if (!user) {
+      throw new HttpException('ID not found', HttpStatus.NOT_FOUND);
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      let role = user.role;
+      let id = user.id;
+      if (!role) {
+        return {};
+      }
+      if (role === 'admin') {
+        this.beamService
+          .sendAdminLoginNotification(user.email)
+          .catch((err) => console.error('Beams failed:', err));
+      }
+      const payload = { email: user.email, role: user.role, sub: user.id };
+      const token = this.jwtService.sign(payload);
+
+      /*try {
+        await this.mailerService.sendMail({
+          to: admin.email,
+          subject: "Admin Login Notification",
+          text: `You have successfully logged in as an admin. Access Time: ${new Date().toISOString()}`,
+        });
+        } catch (error) {
+          console.error('Mailer failed:', error);  // Or throw HttpException if you want, but keep login success
+          }*/
+      return { accessToken: token, role: role, id: id };
+    } else {
+      return { msg: 'Invalid Password' };
+    }
   }
 }
