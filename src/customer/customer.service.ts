@@ -146,7 +146,15 @@ export class CustomerService {
       text: `You have successfully Booked. Access Time: ${new Date().toISOString()}`,
     });
 
-    return this.bookingRepo.save(booking);
+    const savedBooking = await this.bookingRepo.save(booking);
+
+    
+    await this.pusher.trigger(`user-${userId}`, 'booking-created', {
+      message: 'Flight Booked successfully',
+      bookingId: savedBooking.id,
+    });
+
+    return savedBooking;
   }
 
   // ... getMyBookings, getBooking, getProfile, updateProfile → SAME AS BEFORE
@@ -183,10 +191,14 @@ export class CustomerService {
       );
     }
 
-    // Delete booking (will cascade and remove passengers + payment)
-    await this.bookingRepo.remove(booking);
+     await this.bookingRepo.remove(booking);
 
-    return { message: 'Booking deleted successfully' };
+     await this.pusher.trigger(`user-${userId}`, 'booking-cancelled', {
+       message: 'Flight booking cancelled successfully',
+       bookingId,
+     });
+
+     return { message: 'Booking deleted successfully' };
   }
 
   async getBooking(userId: string, bookingId: string) {
@@ -238,7 +250,7 @@ export class CustomerService {
     const saved = await this.profileRepo.save(profile);
 
     await this.pusher.trigger(`user-${userId}`, 'profile-updated', {
-      message: 'Profile updated successfully ✅',
+      message: 'Profile updated successfully',
     });
 
     return saved;
