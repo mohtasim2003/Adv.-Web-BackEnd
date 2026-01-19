@@ -50,14 +50,16 @@ export class AdminController {
     }
   }
 
-  @Post("aircraft")
-  @UseGuards(JwtGuard)
-  @UsePipes(new ValidationPipe())
-  async createAircraft(
-    @Body() aircraftData: CreateAircraftDto,
-  ): Promise<object> {
-    return this.adminService.createAircraft(aircraftData);
-  }
+    @Post('login')
+    @UsePipes(new ValidationPipe())
+    async login(@Body() body: AdminDto, @Res() res: Response): Promise<object> {
+        const result = await this.adminService.login(body.email, body.password);
+        if (result && result['accessToken']) {
+            return res.status(200).json(result);
+        } else {
+            return res.status(401).json({ message: 'Login failed' });
+        }
+    }
 
   @Put("aircraft/:id")
   @UseGuards(JwtGuard)

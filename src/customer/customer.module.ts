@@ -32,8 +32,8 @@ import { MailerModule } from "@nestjs-modules/mailer";
       Profile,
     ]),
     JwtModule.register({
-      secret: "secret123",
-      signOptions: { expiresIn: "24h" },
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: "1h" },
     }),
 
     TypeOrmModule.forFeature([Aircraft, User, Flight]),

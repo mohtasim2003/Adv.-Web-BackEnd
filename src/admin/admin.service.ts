@@ -29,23 +29,25 @@ export class AdminService {
   ) {}
 
   async login(email: string, password: string): Promise<object> {
-    const admin = await this.UserRepository.findOne({
+    const user = await this.UserRepository.findOne({
       where: { email: email },
     });
-    if (!admin) {
-      throw new HttpException("ID not found", HttpStatus.NOT_FOUND);
+    if (!user) {
+      throw new HttpException('ID not found', HttpStatus.NOT_FOUND);
     }
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
-      const role = admin.role;
-      if (role !== "admin") {
-        throw new HttpException("Not an admin user", HttpStatus.FORBIDDEN);
+      let role = user.role;
+      let id = user.id;
+      if (!role) {
+        throw new HttpException('Not an user', HttpStatus.FORBIDDEN);
       }
-      this.beamsService
-        .sendAdminLoginNotification(admin.email)
-        .catch((err) => console.error("Beams failed:", err));
-
-      const payload = { email: admin.email, role: "admin" };
+      if (role === 'admin') {
+        this.beamsService
+          .sendAdminLoginNotification(user.email)
+          .catch((err) => console.error('Beams failed:', err));
+      }
+      const payload = { email: user.email, role: user.role, sub: user.id };
       const token = this.jwtService.sign(payload);
 
       /*try {
@@ -57,7 +59,7 @@ export class AdminService {
       } catch (error) {
         console.error('Mailer failed:', error);  // Or throw HttpException if you want, but keep login success
         }*/
-      return { accessToken: token };
+      return { accessToken: token, role: role, id: id };
     } else {
       throw new HttpException("Invalid password", HttpStatus.UNAUTHORIZED);
     }

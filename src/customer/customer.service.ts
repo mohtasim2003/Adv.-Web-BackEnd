@@ -20,14 +20,17 @@ import { Flight } from "src/shared/entities/flight.entity";
 import { Passenger } from "src/shared/entities/passenger.entity";
 import { Payment } from "src/shared/entities/payment.entity";
 
-import { RegisterCustomerDto } from "./dto/register-customer.dto";
-import { LoginCustomerDto } from "./dto/login-customer.dto";
-import { CreateBookingDto } from "./dto/create-booking.dto";
-import { UpdateProfileDto } from "./dto/update-profile.dto";
-import { MailerService } from "@nestjs-modules/mailer/dist";
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+import { LoginCustomerDto } from './dto/login-customer.dto';
+import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { MailerService } from '@nestjs-modules/mailer/dist';
+import * as Pusher from 'pusher';
+
 
 @Injectable()
 export class CustomerService {
+  private pusher: Pusher;
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Profile) private profileRepo: Repository<Profile>,
@@ -39,7 +42,15 @@ export class CustomerService {
     private mailerService: MailerService,
     @InjectRepository(Flight)
     private FlightRepository: Repository<Flight>,
-  ) {}
+  ) {
+    this.pusher = new Pusher({
+      appId: process.env.PUSHER_APP_ID!,
+      key: process.env.PUSHER_KEY!,
+      secret: process.env.PUSHER_SECRET!,
+      cluster: process.env.PUSHER_CLUSTER!,
+      useTLS: true,
+    });
+  }
 
   // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
   async registerCustomer(dto: RegisterCustomerDto) {
@@ -81,11 +92,13 @@ export class CustomerService {
       where: { user: { id: user.id } },
     });
 
-    const payload = {
-      sub: user.id,
+    const payload = { sub: user.id, email: user.email, role: 'customer' };
+
+    // ✅ PUSHER EVENT
+    await this.pusher.trigger('customer-login', 'logged-in', {
       email: user.email,
-      role: "customer",
-    };
+      message: `Logged in successfully, ${profile?.name || user.email}!`,
+    });
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -184,15 +197,31 @@ export class CustomerService {
   }
 
   async getProfile(userId: string) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'email'],
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
     const profile = await this.profileRepo.findOne({
       where: { user: { id: userId } },
     });
-    return profile || { name: "", phone: "", address: "", loyaltyPoints: 0 };
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: profile?.name || '',
+      phone: profile?.phone || '',
+      address: profile?.address || '',
+      loyaltyPoints: profile?.loyaltyPoints || 0,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     let profile = await this.profileRepo.findOne({
       where: { user: { id: userId } },
+      relations: ['user'], // so we can access email
     });
 
     if (!profile) {
@@ -203,14 +232,20 @@ export class CustomerService {
       Object.assign(profile, dto);
     }
 
-    // Save directly via profileRepo
-    return this.profileRepo.save(profile);
+    const saved = await this.profileRepo.save(profile);
+
+    await this.pusher.trigger(`user-${userId}`, 'profile-updated', {
+      message: 'Profile updated successfully ✅',
+    });
+
+
+    return saved;
   }
 
   async getAllFlight(): Promise<object> {
     const flights = await this.FlightRepository.find();
     if (!flights || flights.length === 0) {
-      return { msg: "Flight Not Found" };
+      return { msg: 'Flight Not Found' };
     }
     return flights;
   }
