@@ -34,3 +34,32 @@ export class UpdateAircraftStatusDto {
     @IsString()
     registration: string;
 }
+
+
+export class UpdateAircraftDto {
+  /*
+  
+                    flightNumber,
+                    departureTime,
+                    arrivalTime,
+                    route,
+                    status,
+                    price: Number(price),
+  */ 
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @IsOptional()
+  @IsString()
+  registration?: string;
+
+  @IsInt()
+  @Min(1)
+  capacity?: number;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+}
+

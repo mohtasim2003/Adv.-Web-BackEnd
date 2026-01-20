@@ -5,7 +5,8 @@ import { AdminDto } from "./dto/admin.dto";
 import { CreateAircraftDto } from "./dto/aircraft.dto";
 import { EmployeeDto } from "./dto/employee.dto";
 import { JwtGuard } from "./admin.guard";
-import { CreateFlightDto, UpdateAircraftDto } from "./dto/flight.dto";
+import { CreateFlightDto, UpdateFlightDto, } from "./dto/flight.dto";
+import { UpdateAircraftDto } from "./dto/aircraft.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -56,6 +57,11 @@ export class AdminController {
         return this.adminService.getAllAircraft();
     }
 
+    @Get('getallaircrafts')
+    async getAllAircrafts(): Promise<object> {
+        return this.adminService.getAllAircraft();
+    }
+
     @Get('aircraft/:id')
     @UseGuards(JwtGuard)
     async getAircraftById(@Param('id', ParseUUIDPipe) id: string): Promise<object> {
@@ -88,25 +94,43 @@ export class AdminController {
         return this.adminService.addFlightToAircraft(id, flightData);
     }
 
+    @Put('flight/:id')
+    @UseGuards(JwtGuard)
+    @UsePipes(new ValidationPipe())
+    async updateFlight(@Param('id', ParseUUIDPipe) id: string,  @Body() flightData: UpdateFlightDto): Promise<object> {
+        
+        return this.adminService.updateFlight(id, flightData);
+    }
+
     @Get('aircraft/:id/flights')
     @UseGuards(JwtGuard)
     async getAllFlightForAircraft(@Param('id', ParseUUIDPipe) id: string): Promise<object> {
         return this.adminService.getAllFlightForAircraft(id);
     }
 
-    @Delete('aircraft/:id/flight/:flightId')
+    @Get('flight/:flightId')
     @UseGuards(JwtGuard)
-    async deleteFlightFromAircraft(@Param('id', ParseUUIDPipe) id: string, @Param('flightid', ParseUUIDPipe) flightid: string): Promise<object> {
-        return this.adminService.deleteFlightFromAircraft(id, flightid);
+    async getFlightById(@Param('flightId', ParseUUIDPipe) flightId: string): Promise<object> {
+        return this.adminService.getFlightById(flightId);
     }
+
+    
+    @Delete('aircraft/:id/flight/:flightId')
+@UseGuards(JwtGuard)
+async deleteFlightFromAircraft(
+  @Param('id', ParseUUIDPipe) id: string,
+  @Param('flightId', ParseUUIDPipe) flightId: string
+): Promise<object> {
+  return this.adminService.deleteFlightFromAircraft(id, flightId);
+}
 
 
     @Get('getallflight')
     @UseGuards(JwtGuard)
     async getAllFlight(): Promise<object> {
         return this.adminService.getAllFlight();
-    }   
-
+    }
+    
 
     
 

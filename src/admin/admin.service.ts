@@ -8,7 +8,8 @@ import * as bcrypt from 'bcrypt';
 import { CreateAircraftDto } from './dto/aircraft.dto';
 import { Aircraft } from 'src/shared/entities/aircraft.entity';
 import { User, UserRole } from 'src/shared/entities/user.entity';
-import { CreateFlightDto, UpdateAircraftDto } from './dto/flight.dto';
+import { CreateFlightDto, UpdateFlightDto, } from './dto/flight.dto';
+import { UpdateAircraftDto } from './dto/aircraft.dto';
 import { Flight } from 'src/shared/entities/flight.entity';
 import { EmployeeDto } from './dto/employee.dto';
 import { MailerService } from '@nestjs-modules/mailer/dist';
@@ -193,6 +194,35 @@ export class AdminService {
     return this.AircraftRepository.find({ where: { status: 'active' } });
   }
 
+
+  async getFlightById(flightId: string): Promise<object> {
+    const flight = await this.FlightRepository.findOne({
+      where: { id: flightId },
+      relations: ['aircraft'],
+    });
+    if (!flight) {
+      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+    }
+    // Return aircraftId along with other flight properties
+    const { aircraft, ...flightData } = flight;
+    return {
+      ...flightData,
+      aircraftId: aircraft ? aircraft.id : null,
+    };
+  }
+
+
+  async updateFlight(id: string, flightData: UpdateFlightDto): Promise<object> {
+    
+    const flight = await this.FlightRepository.findOne({ where: { id: id } });
+    if (!flight) {
+      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+    }
+
+    let res= await this.FlightRepository.update(id, flightData);
+    return this.FlightRepository.find({ where: { id: id } });
+  }
+
   async updateAircraftStatus(id: string, status: string): Promise<object> {
     const aircraft = await this.AircraftRepository.findOne({
       where: { id: id },
@@ -258,6 +288,8 @@ export class AdminService {
     flight.arrivalTime = arrival;
     flight.route = flightData.route;
     flight.aircraft = aircraft;
+    flight.price = flightData.price || 0;
+    flight.status = flightData.status || 'scheduled';
     return this.FlightRepository.save(flight);
   }
 
@@ -307,12 +339,16 @@ export class AdminService {
 }*/
 
   async getAllFlight(): Promise<object> {
-    const flights = await this.FlightRepository.find();
+    const flights = await this.FlightRepository.find({ relations: ['aircraft'] });
     if (!flights || flights.length === 0) {
       throw new HttpException('No flights found', HttpStatus.NOT_FOUND);
     }
-    return flights;
-  }
+    // Map aircraftId for each flight
+    return flights.map(flight => ({
+      ...flight,
+      aircraftId: flight.aircraft?.id || null
+    }));
+}
 
   async updateFlightStatus(id: string, status: string): Promise<object> {
     const flight = await this.FlightRepository.findOne({ where: { id: id } });
