@@ -1,19 +1,20 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { CustomerController } from "./customer.controller";
-import { CustomerService } from "./customer.service";
-import { Booking } from "src/shared/entities/booking.entity";
-import { Flight } from "src/shared/entities/flight.entity";
-import { Payment } from "src/shared/entities/payment.entity";
-import { User } from "src/shared/entities/user.entity";
-import { Profile } from "./entities/profile.entity";
-import { Passenger } from "../shared/entities/passenger.entity";
-import { JwtModule } from "@nestjs/jwt";
-import { CustomerGuard } from "./auth/customer.guard";
-import { Aircraft } from "src/shared/entities/aircraft.entity";
-import { MailerModule } from "@nestjs-modules/mailer";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CustomerController } from './customer.controller';
+import { CustomerService } from './customer.service';
+import { Booking } from 'src/shared/entities/booking.entity';
+import { Flight } from 'src/shared/entities/flight.entity';
+import { Payment } from 'src/shared/entities/payment.entity';
+import { User } from 'src/shared/entities/user.entity';
+import { Profile } from './entities/profile.entity';
+import { Passenger } from '../shared/entities/passenger.entity';
+import { JwtModule } from '@nestjs/jwt';
+import { CustomerGuard } from './auth/customer.guard';
+import { Aircraft } from 'src/shared/entities/aircraft.entity';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { BeamsService } from './beams.service';
 // import { Booking } from '../shared/entities/booking.entity';
 // import { Flight } from '../shared/entities/flight.entity';
 // import { Passenger } from './entities/passenger.entity';
@@ -33,13 +34,13 @@ import { MailerModule } from "@nestjs-modules/mailer";
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: "1h" },
+      signOptions: { expiresIn: '1h' },
     }),
 
     TypeOrmModule.forFeature([Aircraft, User, Flight]),
     MailerModule.forRoot({
       transport: {
-        host: "smtp.gmail.com",
+        host: 'smtp.gmail.com',
         port: 587,
         secure: false,
         requireTLS: true,
@@ -51,6 +52,6 @@ import { MailerModule } from "@nestjs-modules/mailer";
     }),
   ],
   controllers: [CustomerController],
-  providers: [CustomerService, CustomerGuard],
+  providers: [CustomerService, CustomerGuard, BeamsService],
 })
 export class CustomerModule {}

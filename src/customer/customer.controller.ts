@@ -33,26 +33,37 @@ export class CustomerController {
     return this.service.registerCustomer(dto);
   }
 
-  @Post("login")
-  @UsePipes(ValidationPipe)
-  async login(@Body() dto: LoginCustomerDto, @Res({ passthrough: true }) res) {
-    const result = this.service.loginCustomer(dto);
+  // @Post('login')
+  // @UsePipes(ValidationPipe)
+  // async login(@Body() dto: LoginCustomerDto, @Res({ passthrough: true }) res) {
+  //   const result = this.service.loginCustomer(dto);
 
-    // Set HTTP ONLY COOKIE
-    res.cookie('accessToken', (await result).access_token, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: false,
-      path: '/',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+  //   // Set HTTP ONLY COOKIE
+  //   res.cookie('accessToken', (await result).access_token, {
+  //     httpOnly: true,
+  //     sameSite: 'strict',
+  //     secure: false,
+  //     path: '/',
+  //     maxAge: 24 * 60 * 60 * 1000,
+  //   });
 
 
-    return {
-      message: "Login success",
-      user: (await result).user,
-    };
-  }
+  //   return {
+  //     message: 'Login success',
+  //     user: (await result).user,
+  //   };
+  // }
+
+  @Post('login')
+      @UsePipes(new ValidationPipe())
+      async login(@Body() body: LoginCustomerDto, @Res() res: Response): Promise<object> {
+          const result = await this.service.login(body.email, body.password);
+          if (result && result['accessToken']) {
+              return res.status(200).json(result);
+          } else {
+              return res.status(401).json({ message: 'Login failed' });
+          }
+      }
 
   @Post("logout")
   logout(@Res({ passthrough: true }) res: Response) {
