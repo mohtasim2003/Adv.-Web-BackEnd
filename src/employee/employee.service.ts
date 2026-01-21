@@ -23,9 +23,11 @@ import { LoginEmployeeDto } from "./dto/login-employee.dto";
 import { JwtService } from "@nestjs/jwt";
 import { MailerService } from "@nestjs-modules/mailer";
 import { UpdateBookingDto } from "./dto/update-booking.dto";
+import * as Pusher from 'pusher';
 
 @Injectable()
 export class EmployeeService {
+  pusher: any;
   constructor(
     @InjectRepository(Booking) private bookingRepo: Repository<Booking>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
@@ -88,6 +90,11 @@ export class EmployeeService {
       process.env.JWT_SECRET || "secret123",
       { expiresIn: "7d" },
     );
+
+    await this.pusher.trigger("auth-channel", "employee-login", {
+      message: "Employee logged in",
+      // optional: employeeId etc
+    });
 
     return {
       message: "Login successful",
@@ -180,15 +187,43 @@ export class EmployeeService {
     };
   }
 
-  async getBookings() {
-    return this.bookingRepo.find();
-  }
+async getBookings() {
+  const bookings = await this.bookingRepo.find({
+    relations: ["flight", "customer"],
+  });
+
+  return bookings.map((b) => ({
+    ...b,
+    flightId: b.flight?.id,      // ✅ string UUID
+    customerId: b.customer?.id,  // ✅ string UUID
+  }));
+}
+
+
+
 
   async getBooking(id: string) {
-    const b = await this.bookingRepo.findOne({ where: { id } });
-    if (!b) throw new NotFoundException("Booking not found");
-    return b;
+  const booking = await this.bookingRepo.findOne({
+    where: { id },
+    relations: ["flight", "customer"],
+  });
+
+  if (!booking) {
+    throw new NotFoundException("Booking not found");
   }
+
+  return {
+    id: booking.id,
+    status: booking.status,
+
+    flightId: booking.flight?.id,
+    customerId: booking.customer?.id,
+
+    flight: booking.flight,
+    customer: booking.customer,
+  };
+}
+
 
   //updated
   async updateBooking(id: string, updateBookingDto: UpdateBookingDto) {
@@ -234,8 +269,14 @@ export class EmployeeService {
   }
 
   async listPassengers(bookingId: string) {
-    return this.passengerRepo.find({ where: { booking: { id: bookingId } } });
-  }
+  return this.passengerRepo.find({
+    where: {
+      booking: { id: bookingId },
+    },
+    select: ["id", "name", "passport"], // ✅ explicitly include
+  });
+}
+
 
   async deletePassenger(bookingId: string, passengerId: string) {
     const res = await this.passengerRepo.delete({

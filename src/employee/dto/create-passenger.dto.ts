@@ -5,5 +5,5 @@ export class CreatePassengerDto {
   name: string;
 
   @IsString()
-  passportNumber: string;
+  passport: string;
 }

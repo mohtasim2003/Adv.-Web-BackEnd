@@ -4,8 +4,8 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
-} from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class EmployeeGuard implements CanActivate {
@@ -13,26 +13,28 @@ export class EmployeeGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const token = request.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      throw new HttpException("No token provided", HttpStatus.UNAUTHORIZED);
+    let token = request.headers.authorization?.split(' ')[1];
+    if (!token && request.cookies && request.cookies.accessToken) {
+      token = request.cookies.accessToken;
     }
-
+    if (!token) {
+      throw new HttpException('No token', HttpStatus.UNAUTHORIZED);
+    }
     try {
       const payload = this.jwtService.verify(token);
-
-      if (payload.role !== "employee") {
+      if (payload.role !== 'employee') {
         throw new HttpException(
-          "Unauthorized: Employee access required",
+          'Unauthorized: Not an employee',
           HttpStatus.FORBIDDEN,
         );
       }
-
       request.user = payload;
       return true;
-    } catch {
-      throw new HttpException("Invalid token", HttpStatus.UNAUTHORIZED);
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new HttpException('Token expired', HttpStatus.UNAUTHORIZED);
+      }
+      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
   }
 }

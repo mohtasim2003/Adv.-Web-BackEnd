@@ -5,6 +5,7 @@ import { AdminModule } from "./admin/admin.module";
 import { EmployeeModule } from "./employee/employee.module";
 import { CustomerModule } from "./customer/customer.module";
 import { MailerModule } from "@nestjs-modules/mailer";
+import { PusherModule } from "./employee/pusher/pusher.module";
 dotenv.config();
 
 @Module({
@@ -34,6 +35,7 @@ dotenv.config();
     AdminModule,
     EmployeeModule,
     CustomerModule,
+    PusherModule,
     MailerModule.forRoot({
       transport: {
         host: process.env.SMTP_HOST,
