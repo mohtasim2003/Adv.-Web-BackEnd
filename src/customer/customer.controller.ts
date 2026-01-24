@@ -116,6 +116,7 @@ export class CustomerController {
   updateProfile(@Req() req, @Body() dto: UpdateProfileDto) {
     return this.service.updateProfile(req.user.sub, dto);
   }
+  
   @UseGuards(CustomerGuard)
   @Delete('me/:id')
   deleteProfile(@Param('id', ParseUUIDPipe) id: string) {
