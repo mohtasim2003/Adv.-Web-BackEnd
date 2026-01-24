@@ -70,7 +70,7 @@ export class CustomerController {
     res.clearCookie('accessToken', {
       httpOnly: true,
       sameSite: 'strict',
-      secure: false,
+      secure: true,
       path: '/',
     });
 

@@ -8,7 +8,7 @@ async function bootstrap() {
   app.use(cookieParser());
   app.enableCors({
     
-      origin: 'http://localhost:3000',
+      origin: 'https://my-app-mu-fawn.vercel.app',
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
 });
