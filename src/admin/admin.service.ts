@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,7 +8,8 @@ import * as bcrypt from 'bcrypt';
 import { CreateAircraftDto } from './dto/aircraft.dto';
 import { Aircraft } from 'src/shared/entities/aircraft.entity';
 import { User, UserRole } from 'src/shared/entities/user.entity';
-import { CreateFlightDto, UpdateAircraftDto } from './dto/flight.dto';
+import { CreateFlightDto, UpdateFlightDto, } from './dto/flight.dto';
+import { UpdateAircraftDto } from './dto/aircraft.dto';
 import { Flight } from 'src/shared/entities/flight.entity';
 import { EmployeeDto } from './dto/employee.dto';
 import { MailerService } from '@nestjs-modules/mailer/dist';
@@ -61,7 +62,7 @@ export class AdminService {
         }*/
       return { accessToken: token, role: role, id: id };
     } else {
-      throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException("Invalid password", HttpStatus.UNAUTHORIZED);
     }
   }
 
@@ -75,12 +76,12 @@ export class AdminService {
     });
     if (existingAdmin) {
       throw new HttpException(
-        'Admin with this email already exists',
+        "Admin with this email already exists",
         HttpStatus.CONFLICT,
       );
     }
     if (password !== confirmPassword) {
-      throw new HttpException('Passwords do not match', HttpStatus.BAD_REQUEST);
+      throw new HttpException("Passwords do not match", HttpStatus.BAD_REQUEST);
     }
     const salt = await bcrypt.genSalt();
     const admin = new User();
@@ -91,14 +92,14 @@ export class AdminService {
       const res = await this.UserRepository.save(admin);
       return res;
     } catch (error: any) {
-      if (error.code === '23505') {
+      if (error.code === "23505") {
         throw new HttpException(
-          'Admin with this email already exists',
+          "Admin with this email already exists",
           HttpStatus.CONFLICT,
         );
       }
       throw new HttpException(
-        'Registration failed',
+        "Registration failed",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -110,7 +111,7 @@ export class AdminService {
     });
     if (existing) {
       throw new HttpException(
-        'Aircraft with this registration already exists',
+        "Aircraft with this registration already exists",
         HttpStatus.CONFLICT,
       );
     }
@@ -122,14 +123,14 @@ export class AdminService {
       !aircraftData.status
     ) {
       throw new HttpException(
-        'Missing required aircraft data',
+        "Missing required aircraft data",
         HttpStatus.BAD_REQUEST,
       );
     }
 
     if (aircraftData.capacity < 1) {
       throw new HttpException(
-        'Capacity must be at least 1',
+        "Capacity must be at least 1",
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -151,7 +152,7 @@ export class AdminService {
       where: { id: id },
     });
     if (!aircraft) {
-      throw new HttpException('Aircraft not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
     }
     await this.AircraftRepository.update(id, aircraftData);
     return this.AircraftRepository.find({ where: { id: id } });
@@ -160,19 +161,19 @@ export class AdminService {
   async deleteAircraft(id: string): Promise<object> {
     const aircraft = await this.AircraftRepository.findOne({
       where: { id },
-      relations: ['flights'],
+      relations: ["flights"],
     });
     if (!aircraft) {
-      throw new HttpException('Aircraft not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
     }
     if (aircraft.flights && aircraft.flights.length > 0) {
       throw new HttpException(
-        'Cannot delete aircraft with assigned flights',
+        "Cannot delete aircraft with assigned flights",
         HttpStatus.CONFLICT,
       );
     }
     await this.AircraftRepository.delete(id);
-    return { message: 'Aircraft deleted successfully' };
+    return { message: "Aircraft deleted successfully" };
   }
 
   async getAllAircraft(): Promise<object> {
@@ -184,13 +185,42 @@ export class AdminService {
       where: { id: id },
     });
     if (!aircraft) {
-      throw new HttpException('Aircraft not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
     }
     return aircraft;
   }
 
   async getActiveAircraft(): Promise<object> {
-    return this.AircraftRepository.find({ where: { status: 'active' } });
+    return this.AircraftRepository.find({ where: { status: "active" } });
+  }
+
+
+  async getFlightById(flightId: string): Promise<object> {
+    const flight = await this.FlightRepository.findOne({
+      where: { id: flightId },
+      relations: ['aircraft'],
+    });
+    if (!flight) {
+      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+    }
+    // Return aircraftId along with other flight properties
+    const { aircraft, ...flightData } = flight;
+    return {
+      ...flightData,
+      aircraftId: aircraft ? aircraft.id : null,
+    };
+  }
+
+
+  async updateFlight(id: string, flightData: UpdateFlightDto): Promise<object> {
+    
+    const flight = await this.FlightRepository.findOne({ where: { id: id } });
+    if (!flight) {
+      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+    }
+
+    let res= await this.FlightRepository.update(id, flightData);
+    return this.FlightRepository.find({ where: { id: id } });
   }
 
   async updateAircraftStatus(id: string, status: string): Promise<object> {
@@ -198,7 +228,7 @@ export class AdminService {
       where: { id: id },
     });
     if (!aircraft) {
-      throw new HttpException('Aircraft not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
     }
     aircraft.status = status;
     return this.AircraftRepository.save(aircraft);
@@ -210,10 +240,10 @@ export class AdminService {
   ): Promise<object> {
     const aircraft = await this.AircraftRepository.findOne({
       where: { id: id },
-      relations: ['flights'],
+      relations: ["flights"],
     });
     if (!aircraft) {
-      throw new HttpException('Aircraft not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
     }
 
     if (
@@ -223,7 +253,7 @@ export class AdminService {
       !flightData.route
     ) {
       throw new HttpException(
-        'Missing required flight data',
+        "Missing required flight data",
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -231,11 +261,11 @@ export class AdminService {
     const departure = new Date(flightData.departureTime);
     const arrival = new Date(flightData.arrivalTime);
     if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) {
-      throw new HttpException('Invalid date format', HttpStatus.BAD_REQUEST);
+      throw new HttpException("Invalid date format", HttpStatus.BAD_REQUEST);
     }
     if (arrival <= departure) {
       throw new HttpException(
-        'Arrival time must be after departure time',
+        "Arrival time must be after departure time",
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -246,7 +276,72 @@ export class AdminService {
       );
       if (overlap) {
         throw new HttpException(
-          'Aircraft already has a flight scheduled during this time',
+          "Aircraft already has a flight scheduled during this time",
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    const flight = new Flight();
+    flight.flightNumber = flightData.flightNumber;
+    flight.departureTime = departure;
+    flight.arrivalTime = arrival;
+    flight.route = flightData.route;
+    flight.aircraft = aircraft;
+    flight.price = flightData.price || 0;
+    flight.status = flightData.status || 'scheduled';
+    return this.FlightRepository.save(flight);
+  }
+
+  async getAllFlightForAircraft(id: string): Promise<object> {
+    const aircraft = await this.AircraftRepository.findOne({
+      where: { id: id },
+      relations: ["flights"],
+    });
+    if (!aircraft) {
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
+    }
+    if (!aircraft.flights || aircraft.flights.length === 0) {
+      throw new HttpException(
+        "No flights found for this aircraft",
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return aircraft.flights;
+  }
+
+  /*async addFlight(flightData: CreateFlightDto): Promise<object> {
+    if (
+      !flightData.flightNumber ||
+      !flightData.departureTime ||
+      !flightData.arrivalTime ||
+      !flightData.route
+    ) {
+      throw new HttpException(
+        "Missing required flight data",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const departure = new Date(flightData.departureTime);
+    const arrival = new Date(flightData.arrivalTime);
+    if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) {
+      throw new HttpException("Invalid date format", HttpStatus.BAD_REQUEST);
+    }
+    if (arrival <= departure) {
+      throw new HttpException(
+        "Arrival time must be after departure time",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (aircraft.flights && aircraft.flights.length > 0) {
+      const overlap = aircraft.flights.some(
+        (f) => departure < f.arrivalTime && arrival > f.departureTime,
+      );
+      if (overlap) {
+        throw new HttpException(
+          "Aircraft already has a flight scheduled during this time",
           HttpStatus.CONFLICT,
         );
       }
@@ -264,37 +359,43 @@ export class AdminService {
   async getAllFlightForAircraft(id: string): Promise<object> {
     const aircraft = await this.AircraftRepository.findOne({
       where: { id: id },
-      relations: ['flights'],
+      relations: ["flights"],
     });
     if (!aircraft) {
-      throw new HttpException('Aircraft not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Aircraft not found", HttpStatus.NOT_FOUND);
     }
     if (!aircraft.flights || aircraft.flights.length === 0) {
       throw new HttpException(
-        'No flights found for this aircraft',
+        "No flights found for this aircraft",
         HttpStatus.NOT_FOUND,
       );
     }
-    return aircraft.flights;
+    return aircraft.flights.map((flight) => ({ id: flight.id }));
   }
 
-  /*async addFlight(flightData: CreateFlightDto): Promise<object> {
+  async addFlight(flightData: CreateFlightDto): Promise<object> {
     if (
-        !flightData.flightNumber ||
-        !flightData.departureTime ||
-        !flightData.arrivalTime ||
-        !flightData.route
+      !flightData.flightNumber ||
+      !flightData.departureTime ||
+      !flightData.arrivalTime ||
+      !flightData.route
     ) {
-        throw new HttpException('Missing required flight data', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        "Missing required flight data",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const departure = new Date(flightData.departureTime);
     const arrival = new Date(flightData.arrivalTime);
     if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) {
-        throw new HttpException('Invalid date format', HttpStatus.BAD_REQUEST);
+      throw new HttpException("Invalid date format", HttpStatus.BAD_REQUEST);
     }
     if (arrival <= departure) {
-        throw new HttpException('Arrival time must be after departure time', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        "Arrival time must be after departure time",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const flight = new Flight();
@@ -307,17 +408,21 @@ export class AdminService {
 }*/
 
   async getAllFlight(): Promise<object> {
-    const flights = await this.FlightRepository.find();
+    const flights = await this.FlightRepository.find({ relations: ['aircraft'] });
     if (!flights || flights.length === 0) {
-      throw new HttpException('No flights found', HttpStatus.NOT_FOUND);
+      throw new HttpException("No flights found", HttpStatus.NOT_FOUND);
     }
-    return flights;
-  }
+    // Map aircraftId for each flight
+    return flights.map(flight => ({
+      ...flight,
+      aircraftId: flight.aircraft?.id || null
+    }));
+}
 
   async updateFlightStatus(id: string, status: string): Promise<object> {
     const flight = await this.FlightRepository.findOne({ where: { id: id } });
     if (!flight) {
-      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Flight not found", HttpStatus.NOT_FOUND);
     }
     flight.status = status;
     return this.FlightRepository.save(flight);
@@ -329,12 +434,12 @@ export class AdminService {
   ): Promise<object> {
     const flight = await this.FlightRepository.findOne({
       where: { id: flightid },
-      relations: ['aircraft'],
+      relations: ["aircraft"],
     });
 
     if (!flight || !flight.aircraft || flight.aircraft.id !== id) {
       throw new HttpException(
-        'Flight not found for this aircraft',
+        "Flight not found for this aircraft",
         HttpStatus.NOT_FOUND,
       );
     }
@@ -342,7 +447,7 @@ export class AdminService {
     flight.aircraft = null;
     await this.FlightRepository.save(flight);
 
-    return { message: 'Flight removed from aircraft' };
+    return { message: "Flight removed from aircraft" };
   }
 
   async createEmployee(employeeData: EmployeeDto): Promise<object> {
@@ -351,7 +456,7 @@ export class AdminService {
     });
     if (find) {
       throw new HttpException(
-        'Employee with this email already exists',
+        "Employee with this email already exists",
         HttpStatus.CONFLICT,
       );
     }
@@ -363,11 +468,11 @@ export class AdminService {
     try {
       await this.mailerService.sendMail({
         to: employeeData.email,
-        subject: 'Welcome to the Team!',
+        subject: "Welcome to the Team!",
         text: `You have been added as an employee. Your login email is: ${employeeData.email}. If you have any questions, please contact admin. Access Time: ${new Date().toISOString()}`,
       });
     } catch (error) {
-      console.error('Mailer failed:', error);
+      console.error("Mailer failed:", error);
     }
     return this.UserRepository.save(employee);
   }
@@ -381,7 +486,7 @@ export class AdminService {
       where: { id: id, role: UserRole.EMPLOYEE },
     });
     if (!employee) {
-      throw new HttpException('Employee not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Employee not found", HttpStatus.NOT_FOUND);
     }
     employee.isActive = isActive;
     return this.UserRepository.save(employee);
@@ -392,10 +497,10 @@ export class AdminService {
       where: { id: id, role: UserRole.EMPLOYEE },
     });
     if (!employee) {
-      throw new HttpException('Employee not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Employee not found", HttpStatus.NOT_FOUND);
     }
     await this.UserRepository.delete(id);
-    return { message: 'Employee deleted successfully' };
+    return { message: "Employee deleted successfully" };
   }
 
   async assignEmployeeToFlight(
@@ -405,16 +510,16 @@ export class AdminService {
     // Load the crew relation to avoid overwriting existing crew
     const flight = await this.FlightRepository.findOne({
       where: { id: flightId },
-      relations: ['crew'],
+      relations: ["crew"],
     });
     if (!flight) {
-      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Flight not found", HttpStatus.NOT_FOUND);
     }
     const employee = await this.UserRepository.findOne({
       where: { id: employeeId, role: UserRole.EMPLOYEE },
     });
     if (!employee) {
-      return { message: 'Employee not found' };
+      return { message: "Employee not found" };
     }
     if (!flight.crew) {
       flight.crew = [];
@@ -426,11 +531,11 @@ export class AdminService {
     try {
       await this.mailerService.sendMail({
         to: employee.email,
-        subject: 'Flight Assignment Notification',
+        subject: "Flight Assignment Notification",
         text: `You have been assigned to flight ${flight.flightNumber} departing at ${flight.departureTime.toISOString()}. Please prepare accordingly.`,
       });
     } catch (error) {
-      console.error('Mailer failed:', error);
+      console.error("Mailer failed:", error);
     }
     return this.FlightRepository.save(flight);
   }
@@ -438,10 +543,10 @@ export class AdminService {
   async getFlightCrew(flightId: string): Promise<object> {
     const flight = await this.FlightRepository.findOne({
       where: { id: flightId },
-      relations: ['crew'],
+      relations: ["crew"],
     });
     if (!flight) {
-      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Flight not found", HttpStatus.NOT_FOUND);
     }
     return flight.crew;
   }
@@ -452,10 +557,10 @@ export class AdminService {
   ): Promise<object> {
     const flight = await this.FlightRepository.findOne({
       where: { id: flightId },
-      relations: ['crew'],
+      relations: ["crew"],
     });
     if (!flight) {
-      throw new HttpException('Flight not found', HttpStatus.NOT_FOUND);
+      throw new HttpException("Flight not found", HttpStatus.NOT_FOUND);
     }
     flight.crew = (flight.crew || []).filter((e) => e.id !== employeeId);
     return this.FlightRepository.save(flight);

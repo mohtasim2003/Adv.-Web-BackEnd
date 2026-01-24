@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import * as PushNotifications from '@pusher/push-notifications-server';
+import { Injectable } from "@nestjs/common";
+import * as PushNotifications from "@pusher/push-notifications-server";
 
 @Injectable()
 export class BeamsService {
@@ -13,10 +13,10 @@ export class BeamsService {
   }
 
   async sendAdminLoginNotification(email: string) {
-    await this.beamsClient.publishToInterests(['admin-notifications'], {
+    await this.beamsClient.publishToInterests(["admin-notifications"], {
       web: {
         notification: {
-          title: 'Admin Login',
+          title: "Admin Login",
           body: `Admin ${email} logged in successfully`,
         },
       },

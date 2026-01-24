@@ -1,28 +1,33 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Booking } from '../shared/entities/booking.entity';
-import { Repository, DataSource } from 'typeorm';
-import { CreateBookingDto } from './dto/create-booking.dto';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { Passenger } from '../shared/entities/passenger.entity';
-import { Payment } from './entities/payment.entity';
-import { Flight } from '../shared/entities/flight.entity';
-import { User, UserRole } from '../shared/entities/user.entity';
-import { CreatePassengerDto } from './dto/create-passenger.dto';
-import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UnauthorizedException } from '@nestjs/common/exceptions';
-import { LoginEmployeeDto } from './dto/login-employee.dto';
-import { JwtService } from '@nestjs/jwt';
-import { MailerService } from '@nestjs-modules/mailer';
-import { UpdateBookingDto } from './dto/update-booking.dto';
-
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Booking } from "../shared/entities/booking.entity";
+import { Repository, DataSource } from "typeorm";
+import { CreateBookingDto } from "./dto/create-booking.dto";
+import { CreatePaymentDto } from "./dto/create-payment.dto";
+import { Passenger } from "../shared/entities/passenger.entity";
+import { Payment } from "./entities/payment.entity";
+import { Flight } from "../shared/entities/flight.entity";
+import { User, UserRole } from "../shared/entities/user.entity";
+import { CreatePassengerDto } from "./dto/create-passenger.dto";
+import * as bcrypt from "bcrypt";
+import * as jwt from "jsonwebtoken";
+import { CreateEmployeeDto } from "./dto/create-employee.dto";
+import { UnauthorizedException } from "@nestjs/common/exceptions";
+import { LoginEmployeeDto } from "./dto/login-employee.dto";
+import { JwtService } from "@nestjs/jwt";
+import { MailerService } from "@nestjs-modules/mailer";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
+import * as Pusher from 'pusher';
 
 @Injectable()
 export class EmployeeService {
+  pusher: any;
   constructor(
     @InjectRepository(Booking) private bookingRepo: Repository<Booking>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
@@ -34,10 +39,10 @@ export class EmployeeService {
     private mailerService: MailerService,
   ) {}
 
-//registration and Login
+  //registration and Login
   async registerEmployee(dto: CreateEmployeeDto) {
     const existing = await this.userRepo.findOne({
-      where: { email: dto.email }
+      where: { email: dto.email },
     });
 
     if (existing) {
@@ -50,24 +55,23 @@ export class EmployeeService {
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
-      role: UserRole.EMPLOYEE
+      role: UserRole.EMPLOYEE,
     });
 
     await this.userRepo.save(employee);
 
-    
     return {
       message: "Employee registered successfully",
-      employeeId: employee.id
+      employeeId: employee.id,
     };
   }
 
   async loginEmployee(dto: LoginEmployeeDto) {
     const user = await this.userRepo.findOne({
-      where: { email: dto.email }
+      where: { email: dto.email },
     });
 
-    if (!user || user.role !== 'employee') {
+    if (!user || user.role !== "employee") {
       throw new UnauthorizedException("Invalid credentials");
     }
 
@@ -76,45 +80,56 @@ export class EmployeeService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    
-
     // Generate JWT token
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
       },
       process.env.JWT_SECRET || "secret123",
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
+
+    await this.pusher.trigger("auth-channel", "employee-login", {
+      message: "Employee logged in",
+      // optional: employeeId etc
+    });
 
     return {
       message: "Login successful",
-      token
+      token,
     };
   }
 
-// Booking Management
+  // Booking Management
   async createBooking(dto: CreateBookingDto) {
-    const flight = await this.flightRepo.findOne({ where: { id: dto.flightId }});
-    if (!flight) throw new NotFoundException('Flight not found');
-    const customer = await this.userRepo.findOne({ where: { id: dto.customerId }});
-    if (!customer) throw new NotFoundException('Customer not found');
+    const flight = await this.flightRepo.findOne({
+      where: { id: dto.flightId },
+    });
+    if (!flight) throw new NotFoundException("Flight not found");
+    const customer = await this.userRepo.findOne({
+      where: { id: dto.customerId },
+    });
+    if (!customer) throw new NotFoundException("Customer not found");
 
     // Transaction: create booking + passengers
-    return await this.dataSource.transaction(async manager => {
+    return await this.dataSource.transaction(async (manager) => {
       const booking = manager.create(Booking, { flight, customer });
       const savedBooking = await manager.save(Booking, booking);
 
       if (dto.passengers?.length) {
-        const passengers = dto.passengers.map(p => manager.create(Passenger, { ...p, booking: savedBooking }));
+        const passengers = dto.passengers.map((p) =>
+          manager.create(Passenger, { ...p, booking: savedBooking }),
+        );
         await manager.save(Passenger, passengers);
       }
-      return manager.findOne(Booking, { where: { id: savedBooking.id }, relations: ['passengers', 'flight', 'customer', 'payment'] });
+      return manager.findOne(Booking, {
+        where: { id: savedBooking.id },
+        relations: ["passengers", "flight", "customer", "payment"],
+      });
     });
   }
-
 
   //upated
   async addPayment(bookingId: string, dto: CreatePaymentDto) {
@@ -125,15 +140,15 @@ export class EmployeeService {
       // Find booking with relations
       booking = await manager.findOne(Booking, {
         where: { id: bookingId },
-        relations: ['customer', 'flight', 'passengers', 'payment'],
+        relations: ["customer", "flight", "passengers", "payment"],
       });
 
       if (!booking) {
-        throw new NotFoundException('Booking not found');
+        throw new NotFoundException("Booking not found");
       }
 
       if (booking.payment) {
-        throw new BadRequestException('This booking already has a payment');
+        throw new BadRequestException("This booking already has a payment");
       }
 
       const payment = manager.create(Payment, {
@@ -144,15 +159,15 @@ export class EmployeeService {
 
       savedPayment = await manager.save(Payment, payment);
 
-      await manager.update(Booking, bookingId, { status: 'paid' });
+      await manager.update(Booking, bookingId, { status: "paid" });
     });
 
     // Send ticket email AFTER transaction
-   await this.mailerService.sendMail({
-        //to: process.env.ADMIN_MAIL,
-        to: booking?.customer.email,
-        subject: "Payment Successful - Ticket Issued",
-        text: `You have successfully paid. at: ${new Date().toISOString()}
+    await this.mailerService.sendMail({
+      //to: process.env.ADMIN_MAIL,
+      to: booking?.customer.email,
+      subject: "Payment Successful - Ticket Issued",
+      text: `You have successfully paid. at: ${new Date().toISOString()}
       Dear Customer,
 
       Your payment for booking ID: ${bookingId} has been successfully processed. Here are your ticket details:
@@ -162,88 +177,131 @@ export class EmployeeService {
           
       We wish you a pleasant flight!
       Thank you for choosing our airline.`,
-      });
+    });
 
     return {
-      message: 'Payment Successful. Ticket sent to customer email.',
+      message: "Payment Successful. Ticket sent to customer email.",
       bookingId,
       payment: savedPayment,
-      status: 'paid',
+      status: "paid",
     };
   }
 
-  async getBookings() {
-    return this.bookingRepo.find();
-  }
+async getBookings() {
+  const bookings = await this.bookingRepo.find({
+    relations: ["flight", "customer"],
+  });
+
+  return bookings.map((b) => ({
+    ...b,
+    flightId: b.flight?.id,      // ✅ string UUID
+    customerId: b.customer?.id,  // ✅ string UUID
+  }));
+}
+
+
+
 
   async getBooking(id: string) {
-    const b = await this.bookingRepo.findOne({ where: { id }});
-    if (!b) throw new NotFoundException('Booking not found');
-    return b;
+  const booking = await this.bookingRepo.findOne({
+    where: { id },
+    relations: ["flight", "customer"],
+  });
+
+  if (!booking) {
+    throw new NotFoundException("Booking not found");
   }
 
-//updated
-  async updateBooking(id: string, updateBookingDto: UpdateBookingDto) {
-  const result = await this.bookingRepo.update(id, updateBookingDto);
+  return {
+    id: booking.id,
+    status: booking.status,
 
-  if (result.affected === 0) {
-    throw new NotFoundException('Booking not found');
-  }
+    flightId: booking.flight?.id,
+    customerId: booking.customer?.id,
 
-  return { message: 'Booking updated successfully' };
+    flight: booking.flight,
+    customer: booking.customer,
+  };
 }
+
+
+  //updated
+  async updateBooking(id: string, updateBookingDto: UpdateBookingDto) {
+    const result = await this.bookingRepo.update(id, updateBookingDto);
+
+    if (result.affected === 0) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    return { message: "Booking updated successfully" };
+  }
 
   async deleteBooking(id: string) {
     const res = await this.bookingRepo.delete(id);
-    if (!res.affected) throw new NotFoundException('Booking not found');
+    if (!res.affected) throw new NotFoundException("Booking not found");
     return { deleted: true };
   }
 
   async addPassengers(bookingId: string, passengers: CreatePassengerDto[]) {
     const booking = await this.getBooking(bookingId);
-    const created = passengers.map(p => this.passengerRepo.create({ ...p, booking }));
+    const created = passengers.map((p) =>
+      this.passengerRepo.create({ ...p, booking }),
+    );
     return this.passengerRepo.save(created);
   }
 
   ///update
   async updateBookingStatus(id: string, status: string) {
-  const allowed = ['pending', 'paid', 'checked-in', 'cancelled'];
-  if (!allowed.includes(status)) {
-    throw new BadRequestException(`Invalid status. Allowed: ${allowed.join(', ')}`);
+    const allowed = ["pending", "paid", "checked-in", "cancelled"];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status. Allowed: ${allowed.join(", ")}`,
+      );
+    }
+
+    const result = await this.bookingRepo.update(id, { status });
+
+    if (result.affected === 0) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    return { message: "Status updated", status };
   }
 
-  const result = await this.bookingRepo.update(id, { status });
-
-  if (result.affected === 0) {
-    throw new NotFoundException('Booking not found');
-  }
-
-  return { message: 'Status updated', status };
+  async listPassengers(bookingId: string) {
+  return this.passengerRepo.find({
+    where: {
+      booking: { id: bookingId },
+    },
+    select: ["id", "name", "passport"], // ✅ explicitly include
+  });
 }
 
 
-  async listPassengers(bookingId: string) {
-    return this.passengerRepo.find({ where: { booking: { id: bookingId } } });
-  }
-
   async deletePassenger(bookingId: string, passengerId: string) {
-    const res = await this.passengerRepo.delete({ id: passengerId, booking: { id: bookingId } as any });
-    if (!res.affected) throw new NotFoundException('Passenger not found on that booking');
+    const res = await this.passengerRepo.delete({
+      id: passengerId,
+      booking: { id: bookingId } as any,
+    });
+    if (!res.affected)
+      throw new NotFoundException("Passenger not found on that booking");
     return { deleted: true };
   }
 
-
   //updated
   async checkin(bookingId: string) {
-  const booking = await this.bookingRepo.findOne({ where: { id: bookingId } });
-  if (!booking) throw new NotFoundException('Booking not found');
-  if (booking.status !== 'paid') throw new BadRequestException('Must be paid first');
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+    if (!booking) throw new NotFoundException("Booking not found");
+    if (booking.status !== "paid")
+      throw new BadRequestException("Must be paid first");
 
-  await this.bookingRepo.update(bookingId, { status: 'checked-in' });
+    await this.bookingRepo.update(bookingId, { status: "checked-in" });
 
-  return { message: 'Check-in successful', status: 'checked-in' };
-}
-/*
+    return { message: "Check-in successful", status: "checked-in" };
+  }
+  /*
 
   //Ticket emailing
   async sendticketEmail(customerEmail: string, booking: Booking) {

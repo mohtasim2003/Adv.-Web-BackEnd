@@ -1,4 +1,4 @@
-import { IsDateString, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsString, IsUUID, Min, IsNumber } from 'class-validator';
 
 export class CreateFlightDto {
   @IsString()
@@ -15,24 +15,41 @@ export class CreateFlightDto {
 
   @IsUUID()
   aircraftId: string;
-}
-
-
-export class UpdateAircraftDto {
-  @IsOptional()
-  @IsString()
-  model?: string;
-
-  @IsOptional()
-  @IsString()
-  registration?: string;
-
-  @IsInt()
-  @Min(1)
-  capacity?: number;
 
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
 }
 
+
+export class UpdateFlightDto {
+  @IsOptional()
+  @IsString()
+  flightNumber?: string;
+
+  @IsOptional()
+  @IsDateString()
+  departureTime?: string;
+
+  @IsOptional()
+  @IsDateString()
+  arrivalTime?: string;
+
+  @IsOptional()
+  @IsString()
+  route?: string;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+}

@@ -1,12 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
-import { User } from '../../shared/entities/user.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from "typeorm";
+import { User } from "../../shared/entities/user.entity";
 
 @Entity()
 export class Profile {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @OneToOne(() => User, user => user.profile)
+  @OneToOne(() => User, (user) => user.profile)
   @JoinColumn()
   user: User;
 

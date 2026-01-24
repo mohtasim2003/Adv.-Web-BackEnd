@@ -1,9 +1,9 @@
-import {Entity, PrimaryGeneratedColumn, Column, ManyToOne} from 'typeorm';
-import { Booking } from './booking.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import { Booking } from "./booking.entity";
 
 @Entity()
 export class Passenger {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -13,7 +13,7 @@ export class Passenger {
   passport: string;
 
   @ManyToOne(() => Booking, (booking) => booking.passengers, {
-    onDelete: 'CASCADE', // Recommended
+    onDelete: "CASCADE", // Recommended
   })
   booking: Booking;
 }

@@ -1,5 +1,5 @@
 // src/customer/customer.service.ts
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
 import {
   Injectable,
@@ -16,12 +16,12 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import { User } from 'src/shared/entities/user.entity';
-import { Profile } from './entities/profile.entity';
-import { Booking } from 'src/shared/entities/booking.entity';
-import { Flight } from 'src/shared/entities/flight.entity';
-import { Passenger } from 'src/shared/entities/passenger.entity';
-import { Payment } from 'src/shared/entities/payment.entity';
+import { User } from "src/shared/entities/user.entity";
+import { Profile } from "./entities/profile.entity";
+import { Booking } from "src/shared/entities/booking.entity";
+import { Flight } from "src/shared/entities/flight.entity";
+import { Passenger } from "src/shared/entities/passenger.entity";
+import { Payment } from "src/shared/entities/payment.entity";
 
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginCustomerDto } from './dto/login-customer.dto';
@@ -58,14 +58,14 @@ export class CustomerService {
   // REGISTER + BCRYPT (3 marks) – NO user.profile (shared User has no relation)
   async registerCustomer(dto: RegisterCustomerDto) {
     const exists = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (exists) throw new ConflictException('Email already registered');
+    if (exists) throw new ConflictException("Email already registered");
 
     const hashed = await bcrypt.hash(dto.password, 10);
 
     const user = this.userRepo.create({
       email: dto.email,
       password: hashed,
-      userRole: 'customer', // string – correct
+      userRole: "customer", // string – correct
     });
     await this.userRepo.save(user);
 
@@ -78,7 +78,7 @@ export class CustomerService {
     );
 
     return {
-      message: 'Registered successfully',
+      message: "Registered successfully",
       email: user.email,
       password: user.password,
     };
@@ -88,7 +88,7 @@ export class CustomerService {
   async loginCustomer(dto: LoginCustomerDto) {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const profile = await this.profileRepo.findOne({
@@ -108,7 +108,7 @@ export class CustomerService {
       user: {
         id: user.id,
         email: user.email,
-        name: profile?.name || '',
+        name: profile?.name || "",
       },
     };
   }
@@ -118,17 +118,17 @@ export class CustomerService {
     const flight = await this.flightRepo.findOne({
       where: { id: dto.flightId },
     });
-    if (!flight) throw new NotFoundException('Flight not found');
+    if (!flight) throw new NotFoundException("Flight not found");
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     const passengers = dto.passengers.map((p) => this.passengerRepo.create(p));
 
     const booking = this.bookingRepo.create({
       flight,
       customer: user,
-      status: 'confirmed',
+      status: "confirmed",
       passengers,
       bookingDate: new Date(),
     });
@@ -142,7 +142,7 @@ export class CustomerService {
 
     await this.mailerService.sendMail({
       to: process.env.ADMIN_MAIL,
-      subject: 'Booking Notification',
+      subject: "Booking Notification",
       text: `You have successfully Booked. Access Time: ${new Date().toISOString()}`,
     });
 
@@ -161,7 +161,7 @@ export class CustomerService {
   async getMyBookings(userId: string) {
     return this.bookingRepo.find({
       where: { customer: { id: userId } },
-      relations: ['flight', 'passengers', 'payment'],
+      relations: ["flight", "passengers", "payment"],
     });
   }
 
@@ -170,24 +170,24 @@ export class CustomerService {
       id: userId,
     });
 
-    return { message: ' deleted successfully' };
+    return { message: " deleted successfully" };
   }
 
   async deleteBooking(userId: string, bookingId: string) {
     // Load booking with customer and related entities
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['customer', 'passengers', 'payment'],
+      relations: ["customer", "passengers", "payment"],
     });
 
     if (!booking) {
-      throw new NotFoundException('Booking not found');
+      throw new NotFoundException("Booking not found");
     }
 
     // Prevent users from deleting others’ bookings
     if (booking.customer.id !== userId) {
       throw new ForbiddenException(
-        'You are not allowed to delete this booking',
+        "You are not allowed to delete this booking",
       );
     }
 
@@ -204,7 +204,7 @@ export class CustomerService {
   async getBooking(userId: string, bookingId: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['customer'],
+      relations: ["customer"],
     });
     if (!booking) throw new NotFoundException();
     if (booking.customer.id !== userId) throw new ForbiddenException();
