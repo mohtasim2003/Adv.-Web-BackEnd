@@ -67,11 +67,11 @@ export class CustomerController {
 
   @Post("logout")
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('accessToken', {
+    res.clearCookie("accessToken", {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: "none",
       secure: true,
-      path: '/',
+      path: "/",
     });
 
     res.clearCookie('userid', { path: '/' });
